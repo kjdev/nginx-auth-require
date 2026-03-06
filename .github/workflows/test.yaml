@@ -72,7 +72,7 @@ jobs:
           make
           # Copy module
           sudo mkdir -p /usr/lib/nginx/modules
-          sudo cp objs/ngx_http_auth_require_module.so /usr/lib/nginx/modules/
+          sudo cp objs/ngx_http_auth_gate_module.so /usr/lib/nginx/modules/
           sudo ln -sfn /usr/sbin/nginx /usr/local/sbin/nginx
       - if: ${{ matrix.nginx != 'ubuntu' }}
         name: Build with sources
@@ -90,7 +90,7 @@ jobs:
           make -j
           # Copy module
           sudo mkdir -p /usr/lib/nginx/modules
-          sudo cp objs/ngx_http_auth_require_module.so /usr/lib/nginx/modules/
+          sudo cp objs/ngx_http_auth_gate_module.so /usr/lib/nginx/modules/
           sudo cp objs/nginx /usr/local/sbin/
         env:
           nginx_version: ${{ matrix.nginx }}
@@ -114,7 +114,7 @@ jobs:
           fi
           exit "${test_status}"
         env:
-          TEST_NGINX_LOAD_MODULES: /usr/lib/nginx/modules/ngx_http_auth_require_module.so
+          TEST_NGINX_LOAD_MODULES: /usr/lib/nginx/modules/ngx_http_auth_gate_module.so
           TEST_NGINX_SERVROOT: /tmp/servroot
           TEST_NGINX_BINARY: /usr/local/sbin/nginx
     timeout-minutes: 30

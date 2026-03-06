@@ -13,7 +13,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 include $TEST_NGINX_CONF_DIR/variables.conf;
 location / {
-  auth_require_json $json_admin .role !gt json=42;
+  auth_gate_json $json_admin .role !gt json=42;
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -26,7 +26,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 include $TEST_NGINX_CONF_DIR/variables.conf;
 location / {
-  auth_require_json $json_admin .role !lt json=42;
+  auth_gate_json $json_admin .role !lt json=42;
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -39,7 +39,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 include $TEST_NGINX_CONF_DIR/variables.conf;
 location / {
-  auth_require_json $json_admin .role !ge json=42;
+  auth_gate_json $json_admin .role !ge json=42;
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -52,7 +52,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 include $TEST_NGINX_CONF_DIR/variables.conf;
 location / {
-  auth_require_json $json_admin .role !le json=42;
+  auth_gate_json $json_admin .role !le json=42;
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -65,7 +65,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 include $TEST_NGINX_CONF_DIR/variables.conf;
 location / {
-  auth_require_json $json_admin .role !any json=["x","y"];
+  auth_gate_json $json_admin .role !any json=["x","y"];
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -78,7 +78,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 include $TEST_NGINX_CONF_DIR/variables.conf;
 location / {
-  auth_require_json $json_admin .age !gt json=3;
+  auth_gate_json $json_admin .age !gt json=3;
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -91,7 +91,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 include $TEST_NGINX_CONF_DIR/variables.conf;
 location / {
-  auth_require_json $json_admin .age !gt json=30;
+  auth_gate_json $json_admin .age !gt json=30;
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -104,7 +104,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 include $TEST_NGINX_CONF_DIR/variables.conf;
 location / {
-  auth_require_json $json_admin .age !ge json=25;
+  auth_gate_json $json_admin .age !ge json=25;
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -117,7 +117,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 include $TEST_NGINX_CONF_DIR/variables.conf;
 location / {
-  auth_require_json $json_admin .age !ge json=30;
+  auth_gate_json $json_admin .age !ge json=30;
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -130,7 +130,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 include $TEST_NGINX_CONF_DIR/variables.conf;
 location / {
-  auth_require_json $json_admin .age !lt json=30;
+  auth_gate_json $json_admin .age !lt json=30;
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -143,7 +143,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 include $TEST_NGINX_CONF_DIR/variables.conf;
 location / {
-  auth_require_json $json_admin .age !lt json=3;
+  auth_gate_json $json_admin .age !lt json=3;
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -156,7 +156,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 include $TEST_NGINX_CONF_DIR/variables.conf;
 location / {
-  auth_require_json $json_admin .age !le json=25;
+  auth_gate_json $json_admin .age !le json=25;
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -169,7 +169,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 include $TEST_NGINX_CONF_DIR/variables.conf;
 location / {
-  auth_require_json $json_admin .age !le json=3;
+  auth_gate_json $json_admin .age !le json=3;
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -183,7 +183,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 include $TEST_NGINX_CONF_DIR/variables.conf;
 set $obj_roles '{"admin":1,"editor":1}';
 location / {
-  auth_require_json $json_admin .role in json=$obj_roles;
+  auth_gate_json $json_admin .role in json=$obj_roles;
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -197,7 +197,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 include $TEST_NGINX_CONF_DIR/variables.conf;
 set $obj_roles '{"editor":1,"viewer":1}';
 location / {
-  auth_require_json $json_admin .role in json=$obj_roles;
+  auth_gate_json $json_admin .role in json=$obj_roles;
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -211,7 +211,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 include $TEST_NGINX_CONF_DIR/variables.conf;
 set $obj_roles '{"admin":1,"editor":1}';
 location / {
-  auth_require_json $json_admin .role !in json=$obj_roles;
+  auth_gate_json $json_admin .role !in json=$obj_roles;
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -225,7 +225,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 include $TEST_NGINX_CONF_DIR/variables.conf;
 set $obj_roles '{"editor":1,"viewer":1}';
 location / {
-  auth_require_json $json_admin .role !in json=$obj_roles;
+  auth_gate_json $json_admin .role !in json=$obj_roles;
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -239,7 +239,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 include $TEST_NGINX_CONF_DIR/variables.conf;
 set $obj_nums '{"25":1,"30":1}';
 location / {
-  auth_require_json $json_admin .age in json=$obj_nums;
+  auth_gate_json $json_admin .age in json=$obj_nums;
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -252,7 +252,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 location / {
   set $var "ok";
-  auth_require $var error=444;
+  auth_gate $var error=444;
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- must_die
@@ -263,7 +263,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 location / {
   set $json '{"role":"admin","role":"guest"}';
-  auth_require_json $json .role eq "admin";
+  auth_gate_json $json .role eq "admin";
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -276,14 +276,14 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 location / {
   set $var "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
-  auth_require $var match "(.*a){20}";
+  auth_gate $var match "(.*a){20}";
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
 GET /
 --- error_code: 403
 --- error_log
-auth_require: regex match limit exceeded
+auth_gate: regex match limit exceeded
 
 === !match with dynamic pattern must be rate-limited
 --- http_config
@@ -292,7 +292,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 location / {
   set $var "test";
   set $pat "^test";
-  auth_require $var !match $pat;
+  auth_gate $var !match $pat;
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -305,18 +305,18 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 location / {
   set $var '{"role":"admin"}';
-  auth_require_json $var .role eq json=invalid;
+  auth_gate_json $var .role eq json=invalid;
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- must_die
 
-=== invalid constant json= value in auth_require must be rejected
+=== invalid constant json= value in auth_gate must be rejected
 --- http_config
 include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 location / {
   set $var "hello";
-  auth_require $var eq json={broken;
+  auth_gate $var eq json={broken;
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- must_die
@@ -327,7 +327,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 include $TEST_NGINX_CONF_DIR/variables.conf;
 location / {
-  auth_require_json $json_admin .role eq json="admin";
+  auth_gate_json $json_admin .role eq json="admin";
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -340,7 +340,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 location / {
   set $json '{}';
-  auth_require_json $json .a.b.c.d.e.f.g.h.i.j.k.l.m.n.o.p.q.r.s.t.u.v.w.x.y.z.aa.ab.ac.ad.ae.af.ag eq "x";
+  auth_gate_json $json .a.b.c.d.e.f.g.h.i.j.k.l.m.n.o.p.q.r.s.t.u.v.w.x.y.z.aa.ab.ac.ad.ae.af.ag eq "x";
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- must_die
@@ -351,7 +351,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 include $TEST_NGINX_CONF_DIR/variables.conf;
 location / {
-  auth_require_json $json_admin .role !in json=42;
+  auth_gate_json $json_admin .role !in json=42;
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -364,7 +364,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 include $TEST_NGINX_CONF_DIR/variables.conf;
 location / {
-  auth_require_json $json_admin .age !match "\\d+";
+  auth_gate_json $json_admin .age !match "\\d+";
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -377,7 +377,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 include $TEST_NGINX_CONF_DIR/variables.conf;
 location / {
-  auth_require_json $json_admin .role in json=$http_x_expected;
+  auth_gate_json $json_admin .role in json=$http_x_expected;
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- more_headers eval
@@ -387,14 +387,14 @@ my $array = "[" . CORE::join(",", 1..1025) . "]";
 GET /
 --- error_code: 403
 --- error_log
-auth_require: in operator array size exceeds limit
+auth_gate: in operator array size exceeds limit
 
 === any operator: individual array size exceeds limit (1024)
 --- http_config
 include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 location / {
-  auth_require_json $http_x_actual . any json=[1];
+  auth_gate_json $http_x_actual . any json=[1];
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- more_headers eval
@@ -404,7 +404,7 @@ my $array = "[" . CORE::join(",", 1..1025) . "]";
 GET /
 --- error_code: 403
 --- error_log
-auth_require: any operator array size exceeds limit
+auth_gate: any operator array size exceeds limit
 
 === Field index exceeds limit (65535)
 --- http_config
@@ -412,7 +412,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 location / {
   set $json '[]';
-  auth_require_json $json .[65536] eq "x";
+  auth_gate_json $json .[65536] eq "x";
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- must_die
@@ -424,7 +424,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 location / {
   set $var 'test';
-  auth_require $var match $http_x_pattern;
+  auth_gate $var match $http_x_pattern;
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- more_headers eval
@@ -434,7 +434,7 @@ my $pat = "^" . ("a" x 8192);
 GET /
 --- error_code: 403
 --- error_log
-auth_require: match operator pattern size exceeds limit
+auth_gate: match operator pattern size exceeds limit
 
 === match with non-string JSON field (without negation)
 --- http_config
@@ -442,37 +442,37 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 include $TEST_NGINX_CONF_DIR/variables.conf;
 location / {
-  auth_require_json $json_admin .age match "\\d+";
+  auth_gate_json $json_admin .age match "\\d+";
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
 GET /
 --- error_code: 403
 
-=== mixed directives: auth_require + auth_require_json AND logic
+=== mixed directives: auth_gate + auth_gate_json AND logic
 --- http_config
 include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 include $TEST_NGINX_CONF_DIR/variables.conf;
 location / {
   set $enabled "1";
-  auth_require $enabled;
-  auth_require_json $json_admin .role eq "admin";
+  auth_gate $enabled;
+  auth_gate_json $json_admin .role eq "admin";
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
 GET /
 --- error_code: 200
 
-=== mixed directives: auth_require fails, auth_require_json not reached
+=== mixed directives: auth_gate fails, auth_gate_json not reached
 --- http_config
 include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 include $TEST_NGINX_CONF_DIR/variables.conf;
 location / {
   set $enabled "";
-  auth_require $enabled error=401;
-  auth_require_json $json_admin .role eq "admin";
+  auth_gate $enabled error=401;
+  auth_gate_json $json_admin .role eq "admin";
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -485,8 +485,8 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 include $TEST_NGINX_CONF_DIR/variables.conf;
 location / {
-  auth_require_json $json_scalar . eq "x" error=401;
-  auth_require_json $json_scalar .field eq "x" error=403;
+  auth_gate_json $json_scalar . eq "x" error=401;
+  auth_gate_json $json_scalar .field eq "x" error=403;
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -499,8 +499,8 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 include $TEST_NGINX_CONF_DIR/variables.conf;
 location / {
-  auth_require_jwt $jwt_scalar . eq "x" error=401;
-  auth_require_jwt $jwt_scalar .field eq "x" error=403;
+  auth_gate_jwt $jwt_scalar . eq "x" error=401;
+  auth_gate_jwt $jwt_scalar .field eq "x" error=403;
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -513,7 +513,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 location / {
   set $json '[]';
-  auth_require_json $json .[007] eq "x";
+  auth_gate_json $json .[007] eq "x";
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- must_die
@@ -524,23 +524,23 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 location / {
   set $var "test";
-  auth_require $var match $http_x_pat;
-  auth_require $var match $http_x_pat;
-  auth_require $var match $http_x_pat;
-  auth_require $var match $http_x_pat;
-  auth_require $var match $http_x_pat;
-  auth_require $var match $http_x_pat;
-  auth_require $var match $http_x_pat;
-  auth_require $var match $http_x_pat;
-  auth_require $var match $http_x_pat;
-  auth_require $var match $http_x_pat;
-  auth_require $var match $http_x_pat;
-  auth_require $var match $http_x_pat;
-  auth_require $var match $http_x_pat;
-  auth_require $var match $http_x_pat;
-  auth_require $var match $http_x_pat;
-  auth_require $var match $http_x_pat;
-  auth_require $var match $http_x_pat;
+  auth_gate $var match $http_x_pat;
+  auth_gate $var match $http_x_pat;
+  auth_gate $var match $http_x_pat;
+  auth_gate $var match $http_x_pat;
+  auth_gate $var match $http_x_pat;
+  auth_gate $var match $http_x_pat;
+  auth_gate $var match $http_x_pat;
+  auth_gate $var match $http_x_pat;
+  auth_gate $var match $http_x_pat;
+  auth_gate $var match $http_x_pat;
+  auth_gate $var match $http_x_pat;
+  auth_gate $var match $http_x_pat;
+  auth_gate $var match $http_x_pat;
+  auth_gate $var match $http_x_pat;
+  auth_gate $var match $http_x_pat;
+  auth_gate $var match $http_x_pat;
+  auth_gate $var match $http_x_pat;
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- more_headers
@@ -549,15 +549,15 @@ X-Pat: ^test$
 GET /
 --- error_code: 403
 --- error_log
-auth_require: dynamic regex compilation limit exceeded
+auth_gate: dynamic regex compilation limit exceeded
 
-=== config error: auth_require_jwt without dot prefix
+=== config error: auth_gate_jwt without dot prefix
 --- http_config
 include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 location / {
   set $jwt "eyJhbGciOiJub25lIn0.eyJzdWIiOiJ0ZXN0In0.";
-  auth_require_jwt $jwt sub eq "test";
+  auth_gate_jwt $jwt sub eq "test";
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- must_die
@@ -568,7 +568,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 location / {
   set $json '[1]';
-  auth_require_json $json .[65535] eq "x";
+  auth_gate_json $json .[65535] eq "x";
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -581,7 +581,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 location / {
   set $var "ok";
-  auth_require $var error=abc;
+  auth_gate $var error=abc;
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- must_die
@@ -592,7 +592,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 location / {
   set $json '{"role":"admin"}';
-  auth_require_json $json role eq "admin";
+  auth_gate_json $json role eq "admin";
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- must_die
@@ -603,7 +603,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 location / {
   set $var "test";
-  auth_require $var match $http_x_pat;
+  auth_gate $var match $http_x_pat;
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- more_headers
@@ -612,7 +612,7 @@ X-Pat: [invalid
 GET /
 --- error_code: 403
 --- error_log
-auth_require: dynamic regex compile failed
+auth_gate: dynamic regex compile failed
 
 === dynamic !match: invalid regex must return 403 (NGX_ERROR transparent)
 --- http_config
@@ -620,7 +620,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 location / {
   set $var "test";
-  auth_require $var !match $http_x_pat;
+  auth_gate $var !match $http_x_pat;
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- more_headers
@@ -629,7 +629,7 @@ X-Pat: [invalid
 GET /
 --- error_code: 403
 --- error_log
-auth_require: dynamic regex compile failed
+auth_gate: dynamic regex compile failed
 
 === dynamic json= invalid JSON must return 403
 --- http_config
@@ -637,7 +637,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 location / {
   set $json '{"role":"admin"}';
-  auth_require_json $json .role eq json=$http_x_expected;
+  auth_gate_json $json .role eq json=$http_x_expected;
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- more_headers
@@ -646,29 +646,29 @@ X-Expected: {invalid json
 GET /
 --- error_code: 403
 --- error_log
-auth_require: expected value parse failed
+auth_gate: expected value parse failed
 
-=== auth_require_json: match_limit exceeded must return 403
+=== auth_gate_json: match_limit exceeded must return 403
 --- http_config
 include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 location / {
   set $json '{"val":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}';
-  auth_require_json $json .val match "(.*a){20}";
+  auth_gate_json $json .val match "(.*a){20}";
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
 GET /
 --- error_code: 403
 --- error_log
-auth_require: regex match limit exceeded
+auth_gate: regex match limit exceeded
 
 === Field depth: exactly 32 segments must be accepted
 --- http_config
 include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 location / {
-  auth_require_json $http_x_json .a.b.c.d.e.f.g.h.i.j.k.l.m.n.o.p.q.r.s.t.u.v.w.x.y.z.aa.ab.ac.ad.ae.af eq "x";
+  auth_gate_json $http_x_json .a.b.c.d.e.f.g.h.i.j.k.l.m.n.o.p.q.r.s.t.u.v.w.x.y.z.aa.ab.ac.ad.ae.af eq "x";
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- more_headers eval
@@ -692,7 +692,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 include $TEST_NGINX_CONF_DIR/variables.conf;
 location / {
-  auth_require_json $json_admin .role in json=$http_x_expected;
+  auth_gate_json $json_admin .role in json=$http_x_expected;
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- more_headers eval
@@ -708,14 +708,14 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 include $TEST_NGINX_CONF_DIR/variables.conf;
 location / {
-  auth_require_json $json_admin .nonexistent !eq json=null;
+  auth_gate_json $json_admin .nonexistent !eq json=null;
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
 GET /
 --- error_code: 403
 --- error_log
-auth_require: field not found
+auth_gate: field not found
 
 === config error: consecutive dots in field path must be rejected
 --- http_config
@@ -723,7 +723,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 location / {
   set $json '{"a":{"b":1}}';
-  auth_require_json $json .a..b eq json=1;
+  auth_gate_json $json .a..b eq json=1;
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- must_die
@@ -734,17 +734,17 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 location / {
   set $json '{"role":"admin"}';
-  auth_require_json $json ..role eq "admin";
+  auth_gate_json $json ..role eq "admin";
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- must_die
 
-=== config error: auth_require with only error= (no variables) must be rejected
+=== config error: auth_gate with only error= (no variables) must be rejected
 --- http_config
 include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 location / {
-  auth_require error=401;
+  auth_gate error=401;
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- must_die
@@ -756,7 +756,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 location / {
   set $json '{"role":"admin"}';
-  auth_require_json $json .role eq $http_x_expected;
+  auth_gate_json $json .role eq $http_x_expected;
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- more_headers eval
@@ -766,7 +766,7 @@ my $val = "a" x 65537;
 GET /
 --- error_code: 403
 --- error_log
-auth_require: expected value too large
+auth_gate: expected value too large
 
 === string fallback: "9" ge "18" is true (string comparison, not numeric)
 --- http_config
@@ -774,7 +774,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 location / {
   set $var "9";
-  auth_require $var ge "18";
+  auth_gate $var ge "18";
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -789,7 +789,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 location / {
   set $json '{"name":"test"}';
-  auth_require_json $json .name match json=$http_x_pat;
+  auth_gate_json $json .name match json=$http_x_pat;
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- more_headers
@@ -798,14 +798,14 @@ X-Pat: "admin\u0000x"
 GET /
 --- error_code: 403
 --- error_log
-auth_require: expected value parse failed
+auth_gate: expected value parse failed
 
 === JSON with NUL escape in subject must be rejected at parse
 --- http_config
 include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 location / {
-  auth_require_json $http_x_json .name match "^admin";
+  auth_gate_json $http_x_json .name match "^admin";
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- more_headers
@@ -814,14 +814,14 @@ X-Json: {"name":"admin\u0000guest"}
 GET /
 --- error_code: 403
 --- error_log
-auth_require_json: JSON parse failed
+auth_gate_json: JSON parse failed
 
 === eq with NUL escape in JSON subject must be rejected
 --- http_config
 include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 location / {
-  auth_require_json $http_x_json .name eq "admin";
+  auth_gate_json $http_x_json .name eq "admin";
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- more_headers
@@ -830,14 +830,14 @@ X-Json: {"name":"admin\u0000bypass"}
 GET /
 --- error_code: 403
 --- error_log
-auth_require_json: JSON parse failed
+auth_gate_json: JSON parse failed
 
 === any operator comparison count at exact limit (100x100=10000)
 --- http_config
 include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 location / {
-  auth_require_json $http_x_actual . any json=$http_x_expected;
+  auth_gate_json $http_x_actual . any json=$http_x_expected;
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- more_headers eval
@@ -854,7 +854,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 include $TEST_NGINX_CONF_DIR/variables.conf;
 location / {
-  auth_require_json $json_admin .age eq "25";
+  auth_gate_json $json_admin .age eq "25";
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -867,7 +867,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 include $TEST_NGINX_CONF_DIR/variables.conf;
 location / {
-  auth_require_json $json_admin .age !eq "25";
+  auth_gate_json $json_admin .age !eq "25";
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -880,7 +880,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 location / {
   set $jwt "eyJhbGciOiJub25lIiwidHlwIjoiSldUIn0.WzEsMiwzXQ.";
-  auth_require_jwt $jwt .[0] eq json=1;
+  auth_gate_jwt $jwt .[0] eq json=1;
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -893,7 +893,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 location / {
   set $jwt "eyJhbGciOiJub25lIiwidHlwIjoiSldUIn0.WzEsMiwzXQ.";
-  auth_require_jwt $jwt .key eq "x";
+  auth_gate_jwt $jwt .key eq "x";
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -906,7 +906,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 location / {
   set $json '';
-  auth_require_json $json .key eq "x";
+  auth_gate_json $json .key eq "x";
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -919,7 +919,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 location / {
   set $jwt '';
-  auth_require_jwt $jwt .key eq "x";
+  auth_gate_jwt $jwt .key eq "x";
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -932,7 +932,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 location / {
   set $json '{"key":"val"}';
-  auth_require_json $json .key. eq "val";
+  auth_gate_json $json .key. eq "val";
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- must_die
@@ -943,7 +943,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 location / {
   set $json '["a","b"]';
-  auth_require_json $json .[100] eq "x";
+  auth_gate_json $json .[100] eq "x";
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -957,7 +957,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 include $TEST_NGINX_CONF_DIR/variables.conf;
 set $expected '{"key":"value"}';
 location / {
-  auth_require_json $json_admin .nested eq json=$expected;
+  auth_gate_json $json_admin .nested eq json=$expected;
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -971,22 +971,22 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 include $TEST_NGINX_CONF_DIR/variables.conf;
 set $expected '{"key":"wrong"}';
 location / {
-  auth_require_json $json_admin .nested eq json=$expected;
+  auth_gate_json $json_admin .nested eq json=$expected;
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
 GET /
 --- error_code: 403
 
-=== auth_require pass + auth_require_jwt fail => 403
+=== auth_gate pass + auth_gate_jwt fail => 403
 --- http_config
 include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 include $TEST_NGINX_CONF_DIR/variables.conf;
 location / {
   set $enabled "1";
-  auth_require $enabled;
-  auth_require_jwt $jwt_admin .role eq "guest";
+  auth_gate $enabled;
+  auth_gate_jwt $jwt_admin .role eq "guest";
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -999,7 +999,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 location / {
   set $jwt "eyJhbGciOiJub25lIiwidHlwIjoiSldUIn0.eyJzdWIiOiJ0ZXN0Iiwicm9sZSI6ImFkbWluIn0.sig.extra1.extra2";
-  auth_require_jwt $jwt .role eq "admin";
+  auth_gate_jwt $jwt .role eq "admin";
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -1012,7 +1012,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 include $TEST_NGINX_CONF_DIR/variables.conf;
 location / {
-  auth_require_json $json_admin .age in json=[25,30];
+  auth_gate_json $json_admin .age in json=[25,30];
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -1025,7 +1025,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 include $TEST_NGINX_CONF_DIR/variables.conf;
 location / {
-  auth_require_json $json_admin .age in json=["25","30"];
+  auth_gate_json $json_admin .age in json=["25","30"];
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -1038,7 +1038,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 location / {
   set $var "";
-  auth_require $var error=401 error=403;
+  auth_gate $var error=401 error=403;
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -1051,7 +1051,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 include $TEST_NGINX_CONF_DIR/variables.conf;
 location / {
-  auth_require_json $json_admin .role !eq "guest";
+  auth_gate_json $json_admin .role !eq "guest";
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -1064,14 +1064,14 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 include $TEST_NGINX_CONF_DIR/variables.conf;
 location / {
-  auth_require_json $json_admin .role !eq "admin";
+  auth_gate_json $json_admin .role !eq "admin";
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
 GET /
 --- error_code: 403
 --- error_log
-auth_require: !eq check failed
+auth_gate: !eq check failed
 --- no_error_log
 !!eq
 
@@ -1081,7 +1081,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 include $TEST_NGINX_CONF_DIR/variables.conf;
 location / {
-  auth_require_json $json_admin .role in json=["admin",42,true,null];
+  auth_gate_json $json_admin .role in json=["admin",42,true,null];
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -1094,7 +1094,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 location / {
   set $json '{"a":["x"]}';
-  auth_require_json $json .a[0]b eq "x";
+  auth_gate_json $json .a[0]b eq "x";
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- must_die
@@ -1105,7 +1105,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 location / {
   set $json '["x"]';
-  auth_require_json $json .[0]b eq "x";
+  auth_gate_json $json .[0]b eq "x";
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- must_die
@@ -1116,7 +1116,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 location / {
   set $json '{"role":"admin"}';
-  auth_require_json $json .role eq json=;
+  auth_gate_json $json .role eq json=;
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- must_die
@@ -1127,7 +1127,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 location / {
   set $json '{"role":"admin"}';
-  auth_require_json $json .role match json="^admin";
+  auth_gate_json $json .role match json="^admin";
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -1140,7 +1140,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 location / {
   set $json '{"role":"admin"}';
-  auth_require_json $json .role match json=42;
+  auth_gate_json $json .role match json=42;
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- must_die
@@ -1151,7 +1151,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 location / {
   set $jwt ".eyJzdWIiOiJ0ZXN0In0.sig";
-  auth_require_jwt $jwt .sub eq "test";
+  auth_gate_jwt $jwt .sub eq "test";
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request

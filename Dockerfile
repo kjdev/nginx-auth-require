@@ -44,7 +44,7 @@ opt=$(echo "${opt}" | sed -e "s|--with-cc-opt='[^']*'||" -e "s|--with-ld-opt='[^
   --with-ld-opt="${with_ld_opt}" \
   --add-dynamic-module=..
 make -j
-cp objs/ngx_http_auth_require_module.so /usr/lib/nginx/modules/
+cp objs/ngx_http_auth_gate_module.so /usr/lib/nginx/modules/
 EOS
 
 # [nginx]
@@ -53,8 +53,8 @@ FROM nginx AS module
 RUN --mount=type=cache,target=/var/cache/apk sh -ex <<'EOS'
 apk upgrade
 apk add jansson
-# load module: ngx_http_auth_require_module.so
-sed -i '/events {/i load_module "/usr/lib/nginx/modules/ngx_http_auth_require_module.so";' /etc/nginx/nginx.conf
+# load module: ngx_http_auth_gate_module.so
+sed -i '/events {/i load_module "/usr/lib/nginx/modules/ngx_http_auth_gate_module.so";' /etc/nginx/nginx.conf
 EOS
 
-COPY --from=builder /usr/lib/nginx/modules/ngx_http_auth_require_module.so /usr/lib/nginx/modules/ngx_http_auth_require_module.so
+COPY --from=builder /usr/lib/nginx/modules/ngx_http_auth_gate_module.so /usr/lib/nginx/modules/ngx_http_auth_gate_module.so

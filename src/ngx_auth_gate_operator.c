@@ -2,7 +2,7 @@
  * Copyright (c) Tatsuya Kamijo
  * Copyright (c) Bengo4.com, Inc.
  *
- * Operator table and comparison logic for auth_require module
+ * Operator table and comparison logic for auth_gate module
  *
  * Implements 8 operators: eq, gt, ge, lt, le, in, any, match.
  * Negation (! prefix) is handled in the lookup function.
@@ -12,41 +12,41 @@
 #include <ngx_core.h>
 #include <ngx_http.h>
 
-#include "ngx_auth_require_operator.h"
+#include "ngx_auth_gate_operator.h"
 
-#define NGX_AUTH_REQUIRE_MAX_ARRAY_SIZE      1024
-#define NGX_AUTH_REQUIRE_MAX_COMPARE_COUNT   10000
+#define NGX_AUTH_GATE_MAX_ARRAY_SIZE      1024
+#define NGX_AUTH_GATE_MAX_COMPARE_COUNT   10000
 
-#define NGX_AUTH_REQUIRE_MATCH_LIMIT         100000
-#define NGX_AUTH_REQUIRE_MATCH_LIMIT_DEPTH   100000
+#define NGX_AUTH_GATE_MATCH_LIMIT         100000
+#define NGX_AUTH_GATE_MATCH_LIMIT_DEPTH   100000
 
-static ngx_int_t op_eq(ngx_auth_require_json_t *actual,
-    ngx_auth_require_json_t *expected, ngx_pool_t *pool);
-static ngx_int_t op_gt(ngx_auth_require_json_t *actual,
-    ngx_auth_require_json_t *expected, ngx_pool_t *pool);
-static ngx_int_t op_ge(ngx_auth_require_json_t *actual,
-    ngx_auth_require_json_t *expected, ngx_pool_t *pool);
-static ngx_int_t op_lt(ngx_auth_require_json_t *actual,
-    ngx_auth_require_json_t *expected, ngx_pool_t *pool);
-static ngx_int_t op_le(ngx_auth_require_json_t *actual,
-    ngx_auth_require_json_t *expected, ngx_pool_t *pool);
-static ngx_int_t op_in(ngx_auth_require_json_t *actual,
-    ngx_auth_require_json_t *expected, ngx_pool_t *pool);
-static ngx_int_t op_any(ngx_auth_require_json_t *actual,
-    ngx_auth_require_json_t *expected, ngx_pool_t *pool);
+static ngx_int_t op_eq(ngx_auth_gate_json_t *actual,
+    ngx_auth_gate_json_t *expected, ngx_pool_t *pool);
+static ngx_int_t op_gt(ngx_auth_gate_json_t *actual,
+    ngx_auth_gate_json_t *expected, ngx_pool_t *pool);
+static ngx_int_t op_ge(ngx_auth_gate_json_t *actual,
+    ngx_auth_gate_json_t *expected, ngx_pool_t *pool);
+static ngx_int_t op_lt(ngx_auth_gate_json_t *actual,
+    ngx_auth_gate_json_t *expected, ngx_pool_t *pool);
+static ngx_int_t op_le(ngx_auth_gate_json_t *actual,
+    ngx_auth_gate_json_t *expected, ngx_pool_t *pool);
+static ngx_int_t op_in(ngx_auth_gate_json_t *actual,
+    ngx_auth_gate_json_t *expected, ngx_pool_t *pool);
+static ngx_int_t op_any(ngx_auth_gate_json_t *actual,
+    ngx_auth_gate_json_t *expected, ngx_pool_t *pool);
 #if (NGX_PCRE)
-static ngx_int_t op_match(ngx_auth_require_json_t *actual,
-    ngx_auth_require_json_t *expected, ngx_pool_t *pool);
+static ngx_int_t op_match(ngx_auth_gate_json_t *actual,
+    ngx_auth_gate_json_t *expected, ngx_pool_t *pool);
 #endif
 
-static ngx_int_t op_compare_numbers(ngx_auth_require_json_t *actual,
-    ngx_auth_require_json_t *expected, double *diff, ngx_log_t *log);
-static ngx_int_t op_compare_strings(ngx_auth_require_json_t *actual,
-    ngx_auth_require_json_t *expected, ngx_int_t *diff);
+static ngx_int_t op_compare_numbers(ngx_auth_gate_json_t *actual,
+    ngx_auth_gate_json_t *expected, double *diff, ngx_log_t *log);
+static ngx_int_t op_compare_strings(ngx_auth_gate_json_t *actual,
+    ngx_auth_gate_json_t *expected, ngx_int_t *diff);
 
 typedef struct {
-    ngx_str_t                     name;
-    ngx_auth_require_operator_pt  handler;
+    ngx_str_t                  name;
+    ngx_auth_gate_operator_pt  handler;
 } op_entry_t;
 
 static op_entry_t operators[] = {
@@ -66,10 +66,10 @@ static op_entry_t operators[] = {
 
 /* Helper: numeric comparison preserving int64_t precision */
 static ngx_int_t
-op_compare_numbers(ngx_auth_require_json_t *actual,
-    ngx_auth_require_json_t *expected, double *diff, ngx_log_t *log)
+op_compare_numbers(ngx_auth_gate_json_t *actual,
+    ngx_auth_gate_json_t *expected, double *diff, ngx_log_t *log)
 {
-    return ngx_auth_require_json_compare(actual, expected, diff, log);
+    return ngx_auth_gate_json_compare(actual, expected, diff, log);
 }
 
 
@@ -78,13 +78,13 @@ op_compare_numbers(ngx_auth_require_json_t *actual,
  * Returns NGX_OK with ngx_memn2cmp result in *diff.
  */
 static ngx_int_t
-op_compare_strings(ngx_auth_require_json_t *actual,
-    ngx_auth_require_json_t *expected, ngx_int_t *diff)
+op_compare_strings(ngx_auth_gate_json_t *actual,
+    ngx_auth_gate_json_t *expected, ngx_int_t *diff)
 {
     ngx_str_t a, e;
 
-    if (ngx_auth_require_json_string(actual, &a) != NGX_OK
-        || ngx_auth_require_json_string(expected, &e) != NGX_OK)
+    if (ngx_auth_gate_json_string(actual, &a) != NGX_OK
+        || ngx_auth_gate_json_string(expected, &e) != NGX_OK)
     {
         return NGX_ERROR;
     }
@@ -102,17 +102,17 @@ op_compare_strings(ngx_auth_require_json_t *actual,
 
 /* eq: JSON deep equality comparison */
 static ngx_int_t
-op_eq(ngx_auth_require_json_t *actual, ngx_auth_require_json_t *expected,
+op_eq(ngx_auth_gate_json_t *actual, ngx_auth_gate_json_t *expected,
     ngx_pool_t *pool)
 {
-    return ngx_auth_require_json_equal(actual, expected)
+    return ngx_auth_gate_json_equal(actual, expected)
            ? NGX_OK : NGX_DECLINED;
 }
 
 
 /* gt: numeric greater-than, or string lexicographic comparison */
 static ngx_int_t
-op_gt(ngx_auth_require_json_t *actual, ngx_auth_require_json_t *expected,
+op_gt(ngx_auth_gate_json_t *actual, ngx_auth_gate_json_t *expected,
     ngx_pool_t *pool)
 {
     double ndiff;
@@ -136,7 +136,7 @@ op_gt(ngx_auth_require_json_t *actual, ngx_auth_require_json_t *expected,
 
 /* ge: numeric greater-or-equal, or string lexicographic comparison */
 static ngx_int_t
-op_ge(ngx_auth_require_json_t *actual, ngx_auth_require_json_t *expected,
+op_ge(ngx_auth_gate_json_t *actual, ngx_auth_gate_json_t *expected,
     ngx_pool_t *pool)
 {
     double ndiff;
@@ -157,7 +157,7 @@ op_ge(ngx_auth_require_json_t *actual, ngx_auth_require_json_t *expected,
 
 /* lt: numeric less-than, or string lexicographic comparison */
 static ngx_int_t
-op_lt(ngx_auth_require_json_t *actual, ngx_auth_require_json_t *expected,
+op_lt(ngx_auth_gate_json_t *actual, ngx_auth_gate_json_t *expected,
     ngx_pool_t *pool)
 {
     double ndiff;
@@ -178,7 +178,7 @@ op_lt(ngx_auth_require_json_t *actual, ngx_auth_require_json_t *expected,
 
 /* le: numeric less-or-equal, or string lexicographic comparison */
 static ngx_int_t
-op_le(ngx_auth_require_json_t *actual, ngx_auth_require_json_t *expected,
+op_le(ngx_auth_gate_json_t *actual, ngx_auth_gate_json_t *expected,
     ngx_pool_t *pool)
 {
     double ndiff;
@@ -206,26 +206,26 @@ op_le(ngx_auth_require_json_t *actual, ngx_auth_require_json_t *expected,
  * Returns NGX_ERROR for all other expected types.
  */
 static ngx_int_t
-op_in(ngx_auth_require_json_t *actual, ngx_auth_require_json_t *expected,
+op_in(ngx_auth_gate_json_t *actual, ngx_auth_gate_json_t *expected,
     ngx_pool_t *pool)
 {
     size_t i, size;
-    ngx_auth_require_json_t *elem;
+    ngx_auth_gate_json_t *elem;
 
-    if (ngx_auth_require_json_is_array(expected)) {
-        size = ngx_auth_require_json_array_size(expected);
+    if (ngx_auth_gate_json_is_array(expected)) {
+        size = ngx_auth_gate_json_array_size(expected);
 
-        if (size > NGX_AUTH_REQUIRE_MAX_ARRAY_SIZE) {
+        if (size > NGX_AUTH_GATE_MAX_ARRAY_SIZE) {
             ngx_log_error(NGX_LOG_WARN, pool->log, 0,
-                          "auth_require: in operator array size "
+                          "auth_gate: in operator array size "
                           "exceeds limit (%d): %uz",
-                          NGX_AUTH_REQUIRE_MAX_ARRAY_SIZE, size);
+                          NGX_AUTH_GATE_MAX_ARRAY_SIZE, size);
             return NGX_ERROR;
         }
 
         for (i = 0; i < size; i++) {
-            elem = ngx_auth_require_json_array_get(expected, i);
-            if (ngx_auth_require_json_equal(actual, elem)) {
+            elem = ngx_auth_gate_json_array_get(expected, i);
+            if (ngx_auth_gate_json_equal(actual, elem)) {
                 return NGX_OK;
             }
         }
@@ -233,18 +233,18 @@ op_in(ngx_auth_require_json_t *actual, ngx_auth_require_json_t *expected,
         return NGX_DECLINED;
     }
 
-    if (ngx_auth_require_json_is_object(expected)) {
+    if (ngx_auth_gate_json_is_object(expected)) {
         /* Object mode: O(1) key lookup, bounded by MAX_JSON_SIZE */
         ngx_str_t key;
 
-        if (ngx_auth_require_json_string(actual, &key) != NGX_OK) {
+        if (ngx_auth_gate_json_string(actual, &key) != NGX_OK) {
             ngx_log_error(NGX_LOG_WARN, pool->log, 0,
-                          "auth_require: in operator object key lookup "
+                          "auth_gate: in operator object key lookup "
                           "requires a string value");
             return NGX_ERROR;
         }
 
-        elem = ngx_auth_require_json_object_get(expected, &key);
+        elem = ngx_auth_gate_json_object_get(expected, &key);
 
         return (elem != NULL) ? NGX_OK : NGX_DECLINED;
     }
@@ -255,49 +255,49 @@ op_in(ngx_auth_require_json_t *actual, ngx_auth_require_json_t *expected,
 
 /* any: check if two arrays share any common element */
 static ngx_int_t
-op_any(ngx_auth_require_json_t *actual, ngx_auth_require_json_t *expected,
+op_any(ngx_auth_gate_json_t *actual, ngx_auth_gate_json_t *expected,
     ngx_pool_t *pool)
 {
     size_t i, j, asize, esize;
-    ngx_auth_require_json_t *a, *e;
+    ngx_auth_gate_json_t *a, *e;
 
-    if (!ngx_auth_require_json_is_array(actual)
-        || !ngx_auth_require_json_is_array(expected))
+    if (!ngx_auth_gate_json_is_array(actual)
+        || !ngx_auth_gate_json_is_array(expected))
     {
         return NGX_ERROR;
     }
 
-    asize = ngx_auth_require_json_array_size(actual);
-    esize = ngx_auth_require_json_array_size(expected);
+    asize = ngx_auth_gate_json_array_size(actual);
+    esize = ngx_auth_gate_json_array_size(expected);
 
-    if (asize > NGX_AUTH_REQUIRE_MAX_ARRAY_SIZE
-        || esize > NGX_AUTH_REQUIRE_MAX_ARRAY_SIZE)
+    if (asize > NGX_AUTH_GATE_MAX_ARRAY_SIZE
+        || esize > NGX_AUTH_GATE_MAX_ARRAY_SIZE)
     {
         ngx_log_error(NGX_LOG_WARN, pool->log, 0,
-                      "auth_require: any operator array size "
+                      "auth_gate: any operator array size "
                       "exceeds limit (%d): actual=%uz, expected=%uz",
-                      NGX_AUTH_REQUIRE_MAX_ARRAY_SIZE, asize, esize);
+                      NGX_AUTH_GATE_MAX_ARRAY_SIZE, asize, esize);
         return NGX_ERROR;
     }
 
     if (esize > 0
-        && asize > NGX_AUTH_REQUIRE_MAX_COMPARE_COUNT / esize)
+        && asize > NGX_AUTH_GATE_MAX_COMPARE_COUNT / esize)
     {
         ngx_log_error(NGX_LOG_WARN, pool->log, 0,
-                      "auth_require: any operator comparison count "
+                      "auth_gate: any operator comparison count "
                       "exceeds limit (%d): %uz * %uz",
-                      NGX_AUTH_REQUIRE_MAX_COMPARE_COUNT,
+                      NGX_AUTH_GATE_MAX_COMPARE_COUNT,
                       asize, esize);
         return NGX_ERROR;
     }
 
     for (i = 0; i < asize; i++) {
-        a = ngx_auth_require_json_array_get(actual, i);
+        a = ngx_auth_gate_json_array_get(actual, i);
 
         for (j = 0; j < esize; j++) {
-            e = ngx_auth_require_json_array_get(expected, j);
+            e = ngx_auth_gate_json_array_get(expected, j);
 
-            if (ngx_auth_require_json_equal(a, e)) {
+            if (ngx_auth_gate_json_equal(a, e)) {
                 return NGX_OK;
             }
         }
@@ -313,36 +313,36 @@ op_any(ngx_auth_require_json_t *actual, ngx_auth_require_json_t *expected,
  */
 #if (NGX_PCRE)
 static ngx_int_t
-op_match(ngx_auth_require_json_t *actual, ngx_auth_require_json_t *expected,
+op_match(ngx_auth_gate_json_t *actual, ngx_auth_gate_json_t *expected,
     ngx_pool_t *pool)
 {
     ngx_str_t actual_str, pattern_str;
     ngx_regex_compile_t rc;
     u_char errstr[NGX_MAX_CONF_ERRSTR];
 
-    if (ngx_auth_require_json_string(actual, &actual_str) != NGX_OK
-        || ngx_auth_require_json_string(expected, &pattern_str) != NGX_OK)
+    if (ngx_auth_gate_json_string(actual, &actual_str) != NGX_OK
+        || ngx_auth_gate_json_string(expected, &pattern_str) != NGX_OK)
     {
         return NGX_ERROR;
     }
 
     if (pattern_str.len > 8192) {
         ngx_log_error(NGX_LOG_WARN, pool->log, 0,
-                      "auth_require: match operator pattern size "
+                      "auth_gate: match operator pattern size "
                       "exceeds limit (8192): %uz", pattern_str.len);
         return NGX_ERROR;
     }
 
     if (memchr(pattern_str.data, '\0', pattern_str.len) != NULL) {
         ngx_log_error(NGX_LOG_WARN, pool->log, 0,
-                      "auth_require: match operator pattern "
+                      "auth_gate: match operator pattern "
                       "contains embedded NUL byte");
         return NGX_ERROR;
     }
 
     if (memchr(actual_str.data, '\0', actual_str.len) != NULL) {
         ngx_log_error(NGX_LOG_WARN, pool->log, 0,
-                      "auth_require: match operator subject "
+                      "auth_gate: match operator subject "
                       "contains embedded NUL byte");
         return NGX_ERROR;
     }
@@ -360,20 +360,20 @@ op_match(ngx_auth_require_json_t *actual, ngx_auth_require_json_t *expected,
 
     if (ngx_regex_compile(&rc) != NGX_OK) {
         ngx_log_error(NGX_LOG_WARN, pool->log, 0,
-                      "auth_require: dynamic regex compile failed: %V",
+                      "auth_gate: dynamic regex compile failed: %V",
                       &rc.err);
         return NGX_ERROR;
     }
 
-    return ngx_auth_require_regex_exec_limited(rc.regex, &actual_str,
-                                               pool->log);
+    return ngx_auth_gate_regex_exec_limited(rc.regex, &actual_str,
+                                            pool->log);
 }
 #endif
 
 
 ngx_int_t
-ngx_auth_require_operator_find(ngx_str_t *name,
-    ngx_auth_require_operator_pt *op, ngx_flag_t *negate)
+ngx_auth_gate_operator_find(ngx_str_t *name,
+    ngx_auth_gate_operator_pt *op, ngx_flag_t *negate)
 {
     ngx_str_t lookup;
     op_entry_t *entry;
@@ -406,7 +406,7 @@ ngx_auth_require_operator_find(ngx_str_t *name,
 #if (NGX_PCRE)
 
 ngx_int_t
-ngx_auth_require_regex_exec_limited(ngx_regex_t *re, ngx_str_t *s,
+ngx_auth_gate_regex_exec_limited(ngx_regex_t *re, ngx_str_t *s,
     ngx_log_t *log)
 {
     int rc;
@@ -420,8 +420,8 @@ ngx_auth_require_regex_exec_limited(ngx_regex_t *re, ngx_str_t *s,
         return NGX_ERROR;
     }
 
-    pcre2_set_match_limit(mctx, NGX_AUTH_REQUIRE_MATCH_LIMIT);
-    pcre2_set_depth_limit(mctx, NGX_AUTH_REQUIRE_MATCH_LIMIT_DEPTH);
+    pcre2_set_match_limit(mctx, NGX_AUTH_GATE_MATCH_LIMIT);
+    pcre2_set_depth_limit(mctx, NGX_AUTH_GATE_MATCH_LIMIT_DEPTH);
 
     match_data = pcre2_match_data_create(1, NULL);
     if (match_data == NULL) {
@@ -436,7 +436,7 @@ ngx_auth_require_regex_exec_limited(ngx_regex_t *re, ngx_str_t *s,
 
     if (rc == PCRE2_ERROR_MATCHLIMIT || rc == PCRE2_ERROR_DEPTHLIMIT) {
         ngx_log_error(NGX_LOG_WARN, log, 0,
-                      "auth_require: regex match limit exceeded");
+                      "auth_gate: regex match limit exceeded");
         return NGX_ERROR;
     }
 
@@ -446,15 +446,15 @@ ngx_auth_require_regex_exec_limited(ngx_regex_t *re, ngx_str_t *s,
     ngx_memzero(&extra, sizeof(pcre_extra));
 
     extra.flags = PCRE_EXTRA_MATCH_LIMIT | PCRE_EXTRA_MATCH_LIMIT_RECURSION;
-    extra.match_limit = NGX_AUTH_REQUIRE_MATCH_LIMIT;
-    extra.match_limit_recursion = NGX_AUTH_REQUIRE_MATCH_LIMIT_DEPTH;
+    extra.match_limit = NGX_AUTH_GATE_MATCH_LIMIT;
+    extra.match_limit_recursion = NGX_AUTH_GATE_MATCH_LIMIT_DEPTH;
 
     rc = pcre_exec(re->code, &extra,
                    (const char *) s->data, s->len, 0, 0, NULL, 0);
 
     if (rc == PCRE_ERROR_MATCHLIMIT || rc == PCRE_ERROR_RECURSIONLIMIT) {
         ngx_log_error(NGX_LOG_WARN, log, 0,
-                      "auth_require: regex match limit exceeded");
+                      "auth_gate: regex match limit exceeded");
         return NGX_ERROR;
     }
 #endif
@@ -474,7 +474,7 @@ ngx_auth_require_regex_exec_limited(ngx_regex_t *re, ngx_str_t *s,
 #endif
 
     ngx_log_error(NGX_LOG_ERR, log, 0,
-                  "auth_require: pcre match internal error: %d", rc);
+                  "auth_gate: pcre match internal error: %d", rc);
 
     return NGX_ERROR;
 }

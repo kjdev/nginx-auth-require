@@ -13,10 +13,10 @@
 #include <ngx_core.h>
 #include <ngx_http.h>
 
-#include "ngx_auth_require_field.h"
+#include "ngx_auth_gate_field.h"
 
-#define NGX_AUTH_REQUIRE_MAX_FIELD_DEPTH  32
-#define NGX_AUTH_REQUIRE_MAX_FIELD_INDEX  65535
+#define NGX_AUTH_GATE_MAX_FIELD_DEPTH  32
+#define NGX_AUTH_GATE_MAX_FIELD_INDEX  65535
 
 
 /*
@@ -32,7 +32,7 @@
  */
 static ngx_int_t
 field_parse_key(ngx_pool_t *pool, u_char **pos, u_char *end,
-    ngx_auth_require_field_segment_t *seg)
+    ngx_auth_gate_field_segment_t *seg)
 {
     u_char *start;
 
@@ -60,7 +60,7 @@ field_parse_key(ngx_pool_t *pool, u_char **pos, u_char *end,
         (*pos)++;
     }
 
-    seg->type = NGX_AUTH_REQUIRE_FIELD_KEY;
+    seg->type = NGX_AUTH_GATE_FIELD_KEY;
     seg->key.data = start;
     seg->key.len = *pos - start;
     seg->index = 0;
@@ -78,7 +78,7 @@ field_parse_key(ngx_pool_t *pool, u_char **pos, u_char *end,
  */
 static ngx_int_t
 field_parse_bracket(ngx_pool_t *pool, u_char **pos, u_char *end,
-    ngx_auth_require_field_segment_t *seg)
+    ngx_auth_gate_field_segment_t *seg)
 {
     u_char *p;
     ngx_int_t index;
@@ -153,10 +153,10 @@ field_parse_bracket(ngx_pool_t *pool, u_char **pos, u_char *end,
              * reject it.
              */
             ngx_log_error(NGX_LOG_WARN, pool->log, 0,
-                          "auth_require: empty bracket key in field path");
+                          "auth_gate: empty bracket key in field path");
         }
 
-        seg->type = NGX_AUTH_REQUIRE_FIELD_KEY;
+        seg->type = NGX_AUTH_GATE_FIELD_KEY;
         seg->index = 0;
 
         p++;
@@ -189,12 +189,12 @@ field_parse_bracket(ngx_pool_t *pool, u_char **pos, u_char *end,
 
     index = ngx_atoi(*pos, p - *pos);
     if (index == NGX_ERROR
-        || (size_t) index > NGX_AUTH_REQUIRE_MAX_FIELD_INDEX)
+        || (size_t) index > NGX_AUTH_GATE_MAX_FIELD_INDEX)
     {
         return NGX_ERROR;
     }
 
-    seg->type = NGX_AUTH_REQUIRE_FIELD_INDEX;
+    seg->type = NGX_AUTH_GATE_FIELD_INDEX;
     seg->key.data = NULL;
     seg->key.len = 0;
     seg->index = (size_t) index;
@@ -207,18 +207,18 @@ field_parse_bracket(ngx_pool_t *pool, u_char **pos, u_char *end,
 
 
 ngx_int_t
-ngx_auth_require_field_parse(ngx_pool_t *pool, ngx_str_t *raw,
-    ngx_auth_require_field_path_t *path)
+ngx_auth_gate_field_parse(ngx_pool_t *pool, ngx_str_t *raw,
+    ngx_auth_gate_field_path_t *path)
 {
     u_char *p, *end;
-    ngx_auth_require_field_segment_t *seg;
+    ngx_auth_gate_field_segment_t *seg;
 
     if (raw == NULL || raw->len == 0 || raw->data[0] != '.') {
         return NGX_ERROR;
     }
 
     path->segments = ngx_array_create(pool, 4,
-                                      sizeof(ngx_auth_require_field_segment_t));
+                                      sizeof(ngx_auth_gate_field_segment_t));
     if (path->segments == NULL) {
         return NGX_ERROR;
     }
@@ -238,7 +238,7 @@ ngx_auth_require_field_parse(ngx_pool_t *pool, ngx_str_t *raw,
 
     while (p < end) {
 
-        if (path->segments->nelts >= NGX_AUTH_REQUIRE_MAX_FIELD_DEPTH) {
+        if (path->segments->nelts >= NGX_AUTH_GATE_MAX_FIELD_DEPTH) {
             return NGX_ERROR;
         }
 
@@ -299,13 +299,13 @@ ngx_auth_require_field_parse(ngx_pool_t *pool, ngx_str_t *raw,
 }
 
 
-ngx_auth_require_json_t *
-ngx_auth_require_field_get(ngx_auth_require_json_t *root,
-    ngx_auth_require_field_path_t *path)
+ngx_auth_gate_json_t *
+ngx_auth_gate_field_get(ngx_auth_gate_json_t *root,
+    ngx_auth_gate_field_path_t *path)
 {
     ngx_uint_t i;
-    ngx_auth_require_field_segment_t *segments;
-    ngx_auth_require_json_t *current;
+    ngx_auth_gate_field_segment_t *segments;
+    ngx_auth_gate_json_t *current;
 
     if (root == NULL || path == NULL || path->segments == NULL) {
         return NULL;
@@ -323,14 +323,14 @@ ngx_auth_require_field_get(ngx_auth_require_json_t *root,
 
         switch (segments[i].type) {
 
-        case NGX_AUTH_REQUIRE_FIELD_KEY:
-            current = ngx_auth_require_json_object_get(current,
-                                                       &segments[i].key);
+        case NGX_AUTH_GATE_FIELD_KEY:
+            current = ngx_auth_gate_json_object_get(current,
+                                                    &segments[i].key);
             break;
 
-        case NGX_AUTH_REQUIRE_FIELD_INDEX:
-            current = ngx_auth_require_json_array_get(current,
-                                                      segments[i].index);
+        case NGX_AUTH_GATE_FIELD_INDEX:
+            current = ngx_auth_gate_json_array_get(current,
+                                                   segments[i].index);
             break;
 
         default:
@@ -397,13 +397,13 @@ field_count_escapes(ngx_str_t *key)
 
 
 ngx_str_t
-ngx_auth_require_field_path_str(ngx_auth_require_field_path_t *field,
+ngx_auth_gate_field_path_str(ngx_auth_gate_field_path_t *field,
     ngx_pool_t *pool)
 {
     size_t i, k, len;
     u_char *p;
     ngx_str_t result;
-    ngx_auth_require_field_segment_t *segments;
+    ngx_auth_gate_field_segment_t *segments;
 
     ngx_str_null(&result);
 
@@ -425,7 +425,7 @@ ngx_auth_require_field_path_str(ngx_auth_require_field_path_t *field,
     /* calculate total length */
     len = 0;
     for (i = 0; i < field->segments->nelts; i++) {
-        if (segments[i].type == NGX_AUTH_REQUIRE_FIELD_KEY) {
+        if (segments[i].type == NGX_AUTH_GATE_FIELD_KEY) {
             if (field_is_identifier_key(&segments[i].key)) {
                 len += 1 + segments[i].key.len;   /* ".key" */
             } else {
@@ -445,7 +445,7 @@ ngx_auth_require_field_path_str(ngx_auth_require_field_path_t *field,
 
     p = result.data;
     for (i = 0; i < field->segments->nelts; i++) {
-        if (segments[i].type == NGX_AUTH_REQUIRE_FIELD_KEY) {
+        if (segments[i].type == NGX_AUTH_GATE_FIELD_KEY) {
             if (field_is_identifier_key(&segments[i].key)) {
                 *p++ = '.';
                 p = ngx_cpymem(p, segments[i].key.data, segments[i].key.len);

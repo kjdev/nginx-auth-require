@@ -13,7 +13,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 location / {
   set $var "active";
-  auth_require $var;
+  auth_gate $var;
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -26,7 +26,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 location / {
   set $var "";
-  auth_require $var;
+  auth_gate $var;
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -39,7 +39,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 location / {
   set $var "0";
-  auth_require $var;
+  auth_gate $var;
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -52,7 +52,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 location / {
   set $var "1";
-  auth_require $var;
+  auth_gate $var;
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -65,7 +65,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 location / {
   set $var "00";
-  auth_require $var;
+  auth_gate $var;
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -80,7 +80,7 @@ location / {
   set $var1 "a";
   set $var2 "b";
   set $var3 "c";
-  auth_require $var1 $var2 $var3;
+  auth_gate $var1 $var2 $var3;
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -94,7 +94,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 location / {
   set $var1 "";
   set $var2 "b";
-  auth_require $var1 $var2;
+  auth_gate $var1 $var2;
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -108,7 +108,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 location / {
   set $var1 "a";
   set $var2 "";
-  auth_require $var1 $var2;
+  auth_gate $var1 $var2;
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -122,7 +122,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 location / {
   set $var1 "a";
   set $var2 "0";
-  auth_require $var1 $var2;
+  auth_gate $var1 $var2;
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -135,7 +135,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 location / {
   set $var "";
-  auth_require $var error=401;
+  auth_gate $var error=401;
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -148,7 +148,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 location / {
   set $var "ok";
-  auth_require $var error=401;
+  auth_gate $var error=401;
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -162,8 +162,8 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 location / {
   set $var1 "a";
   set $var2 "b";
-  auth_require $var1;
-  auth_require $var2;
+  auth_gate $var1;
+  auth_gate $var2;
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -177,8 +177,8 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 location / {
   set $var1 "a";
   set $var2 "";
-  auth_require $var1 error=401;
-  auth_require $var2 error=403;
+  auth_gate $var1 error=401;
+  auth_gate $var2 error=403;
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -192,8 +192,8 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 location / {
   set $var1 "";
   set $var2 "b";
-  auth_require $var1 error=401;
-  auth_require $var2 error=403;
+  auth_gate $var1 error=401;
+  auth_gate $var2 error=403;
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -209,7 +209,7 @@ map $arg_role $is_admin {
 }
 --- config
 location / {
-  auth_require $is_admin error=403;
+  auth_gate $is_admin error=403;
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -225,7 +225,7 @@ map $arg_role $is_admin {
 }
 --- config
 location / {
-  auth_require $is_admin error=403;
+  auth_gate $is_admin error=403;
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -238,7 +238,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 location / {
   set $var "ok";
-  auth_require $var error=499;
+  auth_gate $var error=499;
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- must_die
@@ -249,7 +249,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 location / {
   set $var "ok";
-  auth_require $var error=399;
+  auth_gate $var error=399;
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- must_die
@@ -260,7 +260,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 location / {
   set $var "ok";
-  auth_require $var error=600;
+  auth_gate $var error=600;
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- must_die
@@ -271,7 +271,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 location / {
   set $var "";
-  auth_require $var error=400;
+  auth_gate $var error=400;
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -284,7 +284,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 location / {
   set $var "";
-  auth_require $var error=599;
+  auth_gate $var error=599;
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request

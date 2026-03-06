@@ -13,7 +13,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 include $TEST_NGINX_CONF_DIR/variables.conf;
 location / {
-  auth_require_jwt $jwt_admin .role eq "admin";
+  auth_gate_jwt $jwt_admin .role eq "admin";
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -26,7 +26,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 include $TEST_NGINX_CONF_DIR/variables.conf;
 location / {
-  auth_require_jwt $jwt_admin .role eq "guest";
+  auth_gate_jwt $jwt_admin .role eq "guest";
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -39,7 +39,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 include $TEST_NGINX_CONF_DIR/variables.conf;
 location / {
-  auth_require_jwt $jwt_admin .role !eq "guest";
+  auth_gate_jwt $jwt_admin .role !eq "guest";
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -52,7 +52,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 include $TEST_NGINX_CONF_DIR/variables.conf;
 location / {
-  auth_require_jwt $jwt_admin .role !eq "admin";
+  auth_gate_jwt $jwt_admin .role !eq "admin";
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -65,7 +65,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 include $TEST_NGINX_CONF_DIR/variables.conf;
 location / {
-  auth_require_jwt $jwt_guest .sub eq "";
+  auth_gate_jwt $jwt_guest .sub eq "";
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -78,7 +78,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 include $TEST_NGINX_CONF_DIR/variables.conf;
 location / {
-  auth_require_jwt $jwt_admin .sub !eq "";
+  auth_gate_jwt $jwt_admin .sub !eq "";
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -91,7 +91,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 include $TEST_NGINX_CONF_DIR/variables.conf;
 location / {
-  auth_require_jwt $jwt_admin .age eq json=25;
+  auth_gate_jwt $jwt_admin .age eq json=25;
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -104,7 +104,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 include $TEST_NGINX_CONF_DIR/variables.conf;
 location / {
-  auth_require_jwt $jwt_admin .age eq json=30;
+  auth_gate_jwt $jwt_admin .age eq json=30;
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -117,7 +117,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 include $TEST_NGINX_CONF_DIR/variables.conf;
 location / {
-  auth_require_jwt $jwt_admin .age gt json=18;
+  auth_gate_jwt $jwt_admin .age gt json=18;
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -130,7 +130,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 include $TEST_NGINX_CONF_DIR/variables.conf;
 location / {
-  auth_require_jwt $jwt_guest .age gt json=18;
+  auth_gate_jwt $jwt_guest .age gt json=18;
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -143,7 +143,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 include $TEST_NGINX_CONF_DIR/variables.conf;
 location / {
-  auth_require_jwt $jwt_admin .age ge json=18;
+  auth_gate_jwt $jwt_admin .age ge json=18;
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -156,7 +156,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 include $TEST_NGINX_CONF_DIR/variables.conf;
 location / {
-  auth_require_jwt $jwt_admin .age ge json=25;
+  auth_gate_jwt $jwt_admin .age ge json=25;
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -169,7 +169,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 include $TEST_NGINX_CONF_DIR/variables.conf;
 location / {
-  auth_require_jwt $jwt_guest .age lt json=18;
+  auth_gate_jwt $jwt_guest .age lt json=18;
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -182,7 +182,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 include $TEST_NGINX_CONF_DIR/variables.conf;
 location / {
-  auth_require_jwt $jwt_admin .age lt json=18;
+  auth_gate_jwt $jwt_admin .age lt json=18;
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -195,7 +195,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 include $TEST_NGINX_CONF_DIR/variables.conf;
 location / {
-  auth_require_jwt $jwt_guest .age le json=18;
+  auth_gate_jwt $jwt_guest .age le json=18;
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -208,7 +208,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 include $TEST_NGINX_CONF_DIR/variables.conf;
 location / {
-  auth_require_jwt $jwt_guest .age le json=15;
+  auth_gate_jwt $jwt_guest .age le json=15;
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -221,7 +221,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 include $TEST_NGINX_CONF_DIR/variables.conf;
 location / {
-  auth_require_jwt $jwt_admin .role in json=["staff","admin","viewer"];
+  auth_gate_jwt $jwt_admin .role in json=["staff","admin","viewer"];
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -234,7 +234,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 include $TEST_NGINX_CONF_DIR/variables.conf;
 location / {
-  auth_require_jwt $jwt_guest .role in json=["staff","admin"];
+  auth_gate_jwt $jwt_guest .role in json=["staff","admin"];
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -247,7 +247,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 include $TEST_NGINX_CONF_DIR/variables.conf;
 location / {
-  auth_require_jwt $jwt_guest .role !in json=["staff","admin"];
+  auth_gate_jwt $jwt_guest .role !in json=["staff","admin"];
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -260,7 +260,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 include $TEST_NGINX_CONF_DIR/variables.conf;
 location / {
-  auth_require_jwt $jwt_admin .role !in json=["staff","admin"];
+  auth_gate_jwt $jwt_admin .role !in json=["staff","admin"];
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -273,7 +273,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 include $TEST_NGINX_CONF_DIR/variables.conf;
 location / {
-  auth_require_jwt $jwt_admin .groups any json=["staff","viewer"];
+  auth_gate_jwt $jwt_admin .groups any json=["staff","viewer"];
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -286,7 +286,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 include $TEST_NGINX_CONF_DIR/variables.conf;
 location / {
-  auth_require_jwt $jwt_admin .groups any json=["viewer","manager"];
+  auth_gate_jwt $jwt_admin .groups any json=["viewer","manager"];
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -299,7 +299,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 include $TEST_NGINX_CONF_DIR/variables.conf;
 location / {
-  auth_require_jwt $jwt_admin .groups !any json=["viewer","manager"];
+  auth_gate_jwt $jwt_admin .groups !any json=["viewer","manager"];
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -312,7 +312,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 include $TEST_NGINX_CONF_DIR/variables.conf;
 location / {
-  auth_require_jwt $jwt_admin .groups !any json=["staff","viewer"];
+  auth_gate_jwt $jwt_admin .groups !any json=["staff","viewer"];
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -325,7 +325,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 include $TEST_NGINX_CONF_DIR/variables.conf;
 location / {
-  auth_require_jwt $jwt_admin .email match "@example\.com";
+  auth_gate_jwt $jwt_admin .email match "@example\.com";
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -338,7 +338,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 include $TEST_NGINX_CONF_DIR/variables.conf;
 location / {
-  auth_require_jwt $jwt_guest .email match "@example\.com";
+  auth_gate_jwt $jwt_guest .email match "@example\.com";
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -351,7 +351,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 include $TEST_NGINX_CONF_DIR/variables.conf;
 location / {
-  auth_require_jwt $jwt_guest .email !match "@example\.com";
+  auth_gate_jwt $jwt_guest .email !match "@example\.com";
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -364,7 +364,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 include $TEST_NGINX_CONF_DIR/variables.conf;
 location / {
-  auth_require_jwt $jwt_admin .nested.key eq "value";
+  auth_gate_jwt $jwt_admin .nested.key eq "value";
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -377,7 +377,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 include $TEST_NGINX_CONF_DIR/variables.conf;
 location / {
-  auth_require_jwt $jwt_admin .nested.key eq "wrong";
+  auth_gate_jwt $jwt_admin .nested.key eq "wrong";
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -390,7 +390,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 include $TEST_NGINX_CONF_DIR/variables.conf;
 location / {
-  auth_require_jwt $jwt_admin .keys[0] eq "primary";
+  auth_gate_jwt $jwt_admin .keys[0] eq "primary";
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -403,7 +403,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 include $TEST_NGINX_CONF_DIR/variables.conf;
 location / {
-  auth_require_jwt $jwt_admin .keys[1] eq "secondary";
+  auth_gate_jwt $jwt_admin .keys[1] eq "secondary";
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -416,7 +416,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 include $TEST_NGINX_CONF_DIR/variables.conf;
 location / {
-  auth_require_jwt $jwt_api .resource_access.my-app.roles any json=["admin"];
+  auth_gate_jwt $jwt_api .resource_access.my-app.roles any json=["admin"];
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -429,7 +429,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 include $TEST_NGINX_CONF_DIR/variables.conf;
 location / {
-  auth_require_jwt $jwt_api .resource_access.my-app.roles any json=["viewer"];
+  auth_gate_jwt $jwt_api .resource_access.my-app.roles any json=["viewer"];
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -442,7 +442,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 include $TEST_NGINX_CONF_DIR/variables.conf;
 location / {
-  auth_require_jwt $jwt_api .scope any json=["api:read"];
+  auth_gate_jwt $jwt_api .scope any json=["api:read"];
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -455,7 +455,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 include $TEST_NGINX_CONF_DIR/variables.conf;
 location / {
-  auth_require_jwt $jwt_api .iss eq "https://accounts.example.com";
+  auth_gate_jwt $jwt_api .iss eq "https://accounts.example.com";
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -468,7 +468,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 include $TEST_NGINX_CONF_DIR/variables.conf;
 location / {
-  auth_require_jwt $jwt_api .iss eq "https://evil.example.com";
+  auth_gate_jwt $jwt_api .iss eq "https://evil.example.com";
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -481,7 +481,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 include $TEST_NGINX_CONF_DIR/variables.conf;
 location / {
-  auth_require_jwt $jwt_api .aud eq "my-app";
+  auth_gate_jwt $jwt_api .aud eq "my-app";
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -494,7 +494,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 include $TEST_NGINX_CONF_DIR/variables.conf;
 location / {
-  auth_require_jwt $jwt_admin .nonexistent eq "value";
+  auth_gate_jwt $jwt_admin .nonexistent eq "value";
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -507,7 +507,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 location / {
   set $bad_jwt "not-a-jwt";
-  auth_require_jwt $bad_jwt .field eq "value";
+  auth_gate_jwt $bad_jwt .field eq "value";
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -520,7 +520,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 include $TEST_NGINX_CONF_DIR/variables.conf;
 location / {
-  auth_require_jwt $jwt_guest .role eq "admin" error=401;
+  auth_gate_jwt $jwt_guest .role eq "admin" error=401;
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -533,8 +533,8 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 include $TEST_NGINX_CONF_DIR/variables.conf;
 location / {
-  auth_require_jwt $jwt_admin .role eq "admin";
-  auth_require_jwt $jwt_admin .age ge json=18;
+  auth_gate_jwt $jwt_admin .role eq "admin";
+  auth_gate_jwt $jwt_admin .age ge json=18;
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -547,8 +547,8 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 include $TEST_NGINX_CONF_DIR/variables.conf;
 location / {
-  auth_require_jwt $jwt_admin .role eq "admin";
-  auth_require_jwt $jwt_admin .age lt json=18 error=403;
+  auth_gate_jwt $jwt_admin .role eq "admin";
+  auth_gate_jwt $jwt_admin .age lt json=18 error=403;
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -561,7 +561,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 include $TEST_NGINX_CONF_DIR/variables.conf;
 location / {
-  auth_require_jwt $jwt_admin .groups eq json=["admin","staff"];
+  auth_gate_jwt $jwt_admin .groups eq json=["admin","staff"];
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -574,7 +574,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 include $TEST_NGINX_CONF_DIR/variables.conf;
 location / {
-  auth_require_jwt $jwt_api .iss match "^https://accounts\.example\.com";
+  auth_gate_jwt $jwt_api .iss match "^https://accounts\.example\.com";
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -587,9 +587,9 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 include $TEST_NGINX_CONF_DIR/variables.conf;
 location / {
-  auth_require_jwt $jwt_admin .role eq "admin";
-  auth_require_jwt $jwt_admin .age ge json=18;
-  auth_require_jwt $jwt_admin .sub eq "user1";
+  auth_gate_jwt $jwt_admin .role eq "admin";
+  auth_gate_jwt $jwt_admin .age ge json=18;
+  auth_gate_jwt $jwt_admin .sub eq "user1";
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -602,9 +602,9 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 include $TEST_NGINX_CONF_DIR/variables.conf;
 location / {
-  auth_require_jwt $jwt_admin .role eq "admin";
-  auth_require_jwt $jwt_admin .age lt json=18;
-  auth_require_jwt $jwt_admin .sub eq "user1";
+  auth_gate_jwt $jwt_admin .role eq "admin";
+  auth_gate_jwt $jwt_admin .age lt json=18;
+  auth_gate_jwt $jwt_admin .sub eq "user1";
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -617,8 +617,8 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 include $TEST_NGINX_CONF_DIR/variables.conf;
 location / {
-  auth_require_jwt $jwt_admin .role eq "admin";
-  auth_require_jwt $jwt_admin .age gt json=30 error=401;
+  auth_gate_jwt $jwt_admin .role eq "admin";
+  auth_gate_jwt $jwt_admin .age gt json=30 error=401;
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -631,9 +631,9 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 include $TEST_NGINX_CONF_DIR/variables.conf;
 location / {
-  auth_require_jwt $jwt_admin .role eq "admin";
-  auth_require_jwt $jwt_guest .role eq "guest";
-  auth_require_jwt $jwt_admin .age ge json=18;
+  auth_gate_jwt $jwt_admin .role eq "admin";
+  auth_gate_jwt $jwt_guest .role eq "guest";
+  auth_gate_jwt $jwt_admin .age ge json=18;
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -646,9 +646,9 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 include $TEST_NGINX_CONF_DIR/variables.conf;
 location / {
-  auth_require_jwt $jwt_admin .role eq "admin";
-  auth_require_jwt $jwt_guest .role eq "admin";
-  auth_require_jwt $jwt_admin .age ge json=18;
+  auth_gate_jwt $jwt_admin .role eq "admin";
+  auth_gate_jwt $jwt_guest .role eq "admin";
+  auth_gate_jwt $jwt_admin .age ge json=18;
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -660,9 +660,9 @@ GET /
 include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 include $TEST_NGINX_CONF_DIR/variables.conf;
-auth_require_jwt $jwt_admin .role eq "admin";
+auth_gate_jwt $jwt_admin .role eq "admin";
 location / {
-  auth_require_jwt $jwt_admin .age ge json=18;
+  auth_gate_jwt $jwt_admin .age ge json=18;
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -674,9 +674,9 @@ GET /
 include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 include $TEST_NGINX_CONF_DIR/variables.conf;
-auth_require_jwt $jwt_admin .role eq "admin";
+auth_gate_jwt $jwt_admin .role eq "admin";
 location / {
-  auth_require_jwt $jwt_admin .age gt json=30;
+  auth_gate_jwt $jwt_admin .age gt json=30;
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -689,7 +689,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 location / {
   set $jwt "notavalidjwt";
-  auth_require_jwt $jwt .role eq "admin";
+  auth_gate_jwt $jwt .role eq "admin";
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -702,7 +702,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 location / {
   set $jwt "header.";
-  auth_require_jwt $jwt .role eq "admin";
+  auth_gate_jwt $jwt .role eq "admin";
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -715,7 +715,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 location / {
   set $jwt "eyJhbGciOiJub25lIn0..";
-  auth_require_jwt $jwt .role eq "admin";
+  auth_gate_jwt $jwt .role eq "admin";
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -728,7 +728,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 location / {
   set $jwt "eyJhbGciOiJub25lIn0.!!!invalid!!!.";
-  auth_require_jwt $jwt .role eq "admin";
+  auth_gate_jwt $jwt .role eq "admin";
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -741,7 +741,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 large_client_header_buffers 4 32k;
 --- config
 location / {
-  auth_require_jwt $http_x_jwt .sub eq "test";
+  auth_gate_jwt $http_x_jwt .sub eq "test";
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- more_headers eval
@@ -751,7 +751,7 @@ my $big = "A" x 17000;
 GET /
 --- error_code: 403
 --- error_log
-auth_require_jwt: token too large
+auth_gate_jwt: token too large
 
 === JWT scalar payload with non-root field path must deny
 --- http_config
@@ -760,7 +760,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 location / {
   # payload: 42 (scalar integer)
   set $jwt "eyJhbGciOiJub25lIiwidHlwIjoiSldUIn0.NDI.";
-  auth_require_jwt $jwt .sub eq "test";
+  auth_gate_jwt $jwt .sub eq "test";
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -774,7 +774,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 location / {
   # payload: {"sub":"user1","https://example.com/role":"editor"}
   set $jwt "eyJhbGciOiJub25lIiwidHlwIjoiSldUIn0.eyJzdWIiOiJ1c2VyMSIsImh0dHBzOi8vZXhhbXBsZS5jb20vcm9sZSI6ImVkaXRvciJ9.";
-  auth_require_jwt $jwt '.["https://example.com/role"]' eq "editor";
+  auth_gate_jwt $jwt '.["https://example.com/role"]' eq "editor";
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request

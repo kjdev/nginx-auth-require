@@ -13,7 +13,7 @@
 #include <ngx_core.h>
 #include <ngx_http.h>
 
-#include "ngx_auth_require_json.h"
+#include "ngx_auth_gate_json.h"
 #include <jansson.h>
 #include <math.h>
 
@@ -21,8 +21,8 @@
 #define JSON_CAST(json) ((json_t *) (json))
 
 
-ngx_auth_require_json_t *
-ngx_auth_require_json_parse(ngx_str_t *data)
+ngx_auth_gate_json_t *
+ngx_auth_gate_json_parse(ngx_str_t *data)
 {
     json_t *root;
     json_error_t error;
@@ -31,7 +31,7 @@ ngx_auth_require_json_parse(ngx_str_t *data)
         return NULL;
     }
 
-    if (data->len > NGX_AUTH_REQUIRE_MAX_JSON_SIZE) {
+    if (data->len > NGX_AUTH_GATE_MAX_JSON_SIZE) {
         return NULL;
     }
 
@@ -46,12 +46,12 @@ ngx_auth_require_json_parse(ngx_str_t *data)
         return NULL;
     }
 
-    return (ngx_auth_require_json_t *) root;
+    return (ngx_auth_gate_json_t *) root;
 }
 
 
 void
-ngx_auth_require_json_free(ngx_auth_require_json_t *json)
+ngx_auth_gate_json_free(ngx_auth_gate_json_t *json)
 {
     if (json) {
         json_decref(JSON_CAST(json));
@@ -59,47 +59,47 @@ ngx_auth_require_json_free(ngx_auth_require_json_t *json)
 }
 
 
-ngx_auth_require_json_type_t
-ngx_auth_require_json_type(ngx_auth_require_json_t *json)
+ngx_auth_gate_json_type_t
+ngx_auth_gate_json_type(ngx_auth_gate_json_t *json)
 {
     json_t *j = JSON_CAST(json);
 
     if (j == NULL) {
-        return NGX_AUTH_REQUIRE_JSON_INVALID;
+        return NGX_AUTH_GATE_JSON_INVALID;
     }
 
     switch (json_typeof(j)) {
 
     case JSON_NULL:
-        return NGX_AUTH_REQUIRE_JSON_NULL;
+        return NGX_AUTH_GATE_JSON_NULL;
 
     case JSON_TRUE:
     case JSON_FALSE:
-        return NGX_AUTH_REQUIRE_JSON_BOOLEAN;
+        return NGX_AUTH_GATE_JSON_BOOLEAN;
 
     case JSON_INTEGER:
-        return NGX_AUTH_REQUIRE_JSON_INTEGER;
+        return NGX_AUTH_GATE_JSON_INTEGER;
 
     case JSON_REAL:
-        return NGX_AUTH_REQUIRE_JSON_REAL;
+        return NGX_AUTH_GATE_JSON_REAL;
 
     case JSON_STRING:
-        return NGX_AUTH_REQUIRE_JSON_STRING;
+        return NGX_AUTH_GATE_JSON_STRING;
 
     case JSON_ARRAY:
-        return NGX_AUTH_REQUIRE_JSON_ARRAY;
+        return NGX_AUTH_GATE_JSON_ARRAY;
 
     case JSON_OBJECT:
-        return NGX_AUTH_REQUIRE_JSON_OBJECT;
+        return NGX_AUTH_GATE_JSON_OBJECT;
 
     default:
-        return NGX_AUTH_REQUIRE_JSON_INVALID;
+        return NGX_AUTH_GATE_JSON_INVALID;
     }
 }
 
 
-ngx_auth_require_json_t *
-ngx_auth_require_json_object_get(ngx_auth_require_json_t *json, ngx_str_t *key)
+ngx_auth_gate_json_t *
+ngx_auth_gate_json_object_get(ngx_auth_gate_json_t *json, ngx_str_t *key)
 {
     json_t *obj = JSON_CAST(json);
 
@@ -107,13 +107,13 @@ ngx_auth_require_json_object_get(ngx_auth_require_json_t *json, ngx_str_t *key)
         return NULL;
     }
 
-    return (ngx_auth_require_json_t *) json_object_getn(
+    return (ngx_auth_gate_json_t *) json_object_getn(
         obj, (const char *) key->data, key->len);
 }
 
 
 size_t
-ngx_auth_require_json_array_size(ngx_auth_require_json_t *json)
+ngx_auth_gate_json_array_size(ngx_auth_gate_json_t *json)
 {
     json_t *arr = JSON_CAST(json);
 
@@ -125,8 +125,8 @@ ngx_auth_require_json_array_size(ngx_auth_require_json_t *json)
 }
 
 
-ngx_auth_require_json_t *
-ngx_auth_require_json_array_get(ngx_auth_require_json_t *json, size_t index)
+ngx_auth_gate_json_t *
+ngx_auth_gate_json_array_get(ngx_auth_gate_json_t *json, size_t index)
 {
     json_t *arr = JSON_CAST(json);
 
@@ -134,12 +134,12 @@ ngx_auth_require_json_array_get(ngx_auth_require_json_t *json, size_t index)
         return NULL;
     }
 
-    return (ngx_auth_require_json_t *) json_array_get(arr, index);
+    return (ngx_auth_gate_json_t *) json_array_get(arr, index);
 }
 
 
 ngx_int_t
-ngx_auth_require_json_string(ngx_auth_require_json_t *json, ngx_str_t *value)
+ngx_auth_gate_json_string(ngx_auth_gate_json_t *json, ngx_str_t *value)
 {
     json_t *j = JSON_CAST(json);
     const char *str;
@@ -161,7 +161,7 @@ ngx_auth_require_json_string(ngx_auth_require_json_t *json, ngx_str_t *value)
 
 
 ngx_int_t
-ngx_auth_require_json_integer(ngx_auth_require_json_t *json, int64_t *value)
+ngx_auth_gate_json_integer(ngx_auth_gate_json_t *json, int64_t *value)
 {
     json_t *j = JSON_CAST(json);
 
@@ -176,7 +176,7 @@ ngx_auth_require_json_integer(ngx_auth_require_json_t *json, int64_t *value)
 
 
 ngx_int_t
-ngx_auth_require_json_real(ngx_auth_require_json_t *json, double *value)
+ngx_auth_gate_json_real(ngx_auth_gate_json_t *json, double *value)
 {
     json_t *j = JSON_CAST(json);
 
@@ -191,7 +191,7 @@ ngx_auth_require_json_real(ngx_auth_require_json_t *json, double *value)
 
 
 ngx_int_t
-ngx_auth_require_json_boolean(ngx_auth_require_json_t *json, ngx_flag_t *value)
+ngx_auth_gate_json_boolean(ngx_auth_gate_json_t *json, ngx_flag_t *value)
 {
     json_t *j = JSON_CAST(json);
 
@@ -205,13 +205,13 @@ ngx_auth_require_json_boolean(ngx_auth_require_json_t *json, ngx_flag_t *value)
 }
 
 
-ngx_auth_require_json_t *
-ngx_auth_require_json_from_string(ngx_str_t *str)
+ngx_auth_gate_json_t *
+ngx_auth_gate_json_from_string(ngx_str_t *str)
 {
     json_t *j;
 
     if (str == NULL || str->data == NULL
-        || str->len > NGX_AUTH_REQUIRE_MAX_JSON_SIZE)
+        || str->len > NGX_AUTH_GATE_MAX_JSON_SIZE)
     {
         return NULL;
     }
@@ -224,13 +224,13 @@ ngx_auth_require_json_from_string(ngx_str_t *str)
      */
     j = json_stringn((const char *) str->data, str->len);
 
-    return (ngx_auth_require_json_t *) j;
+    return (ngx_auth_gate_json_t *) j;
 }
 
 
 ngx_flag_t
-ngx_auth_require_json_equal(ngx_auth_require_json_t *a,
-    ngx_auth_require_json_t *b)
+ngx_auth_gate_json_equal(ngx_auth_gate_json_t *a,
+    ngx_auth_gate_json_t *b)
 {
     if (a == NULL || b == NULL) {
         return 0;
@@ -245,7 +245,7 @@ ngx_auth_require_json_equal(ngx_auth_require_json_t *a,
 
 
 ngx_int_t
-ngx_auth_require_json_number(ngx_auth_require_json_t *json, double *value)
+ngx_auth_gate_json_number(ngx_auth_gate_json_t *json, double *value)
 {
     json_t *j = JSON_CAST(json);
 
@@ -268,8 +268,8 @@ ngx_auth_require_json_number(ngx_auth_require_json_t *json, double *value)
 
 
 ngx_int_t
-ngx_auth_require_json_compare(ngx_auth_require_json_t *a,
-    ngx_auth_require_json_t *b, double *diff, ngx_log_t *log)
+ngx_auth_gate_json_compare(ngx_auth_gate_json_t *a,
+    ngx_auth_gate_json_t *b, double *diff, ngx_log_t *log)
 {
     int64_t ia, ib;
     double da, db;
@@ -279,16 +279,16 @@ ngx_auth_require_json_compare(ngx_auth_require_json_t *a,
     }
 
     /* both integers: compare directly with int64_t precision */
-    if (ngx_auth_require_json_integer(a, &ia) == NGX_OK
-        && ngx_auth_require_json_integer(b, &ib) == NGX_OK)
+    if (ngx_auth_gate_json_integer(a, &ia) == NGX_OK
+        && ngx_auth_gate_json_integer(b, &ib) == NGX_OK)
     {
         *diff = (ia > ib) ? 1.0 : (ia < ib) ? -1.0 : 0.0;
         return NGX_OK;
     }
 
     /* mixed integer/real: promote real to int64_t if lossless */
-    if (ngx_auth_require_json_integer(a, &ia) == NGX_OK
-        && ngx_auth_require_json_real(b, &db) == NGX_OK)
+    if (ngx_auth_gate_json_integer(a, &ia) == NGX_OK
+        && ngx_auth_gate_json_real(b, &db) == NGX_OK)
     {
         /* strict < for INT64_MAX: (double) INT64_MAX rounds up to 2^63 */
         if (db >= (double) INT64_MIN && db < (double) INT64_MAX
@@ -300,8 +300,8 @@ ngx_auth_require_json_compare(ngx_auth_require_json_t *a,
         }
     }
 
-    if (ngx_auth_require_json_real(a, &da) == NGX_OK
-        && ngx_auth_require_json_integer(b, &ib) == NGX_OK)
+    if (ngx_auth_gate_json_real(a, &da) == NGX_OK
+        && ngx_auth_gate_json_integer(b, &ib) == NGX_OK)
     {
         if (da >= (double) INT64_MIN && da < (double) INT64_MAX
             && da == (double) (int64_t) da)
@@ -313,8 +313,8 @@ ngx_auth_require_json_compare(ngx_auth_require_json_t *a,
     }
 
     /* fall back to double comparison */
-    if (ngx_auth_require_json_number(a, &da) != NGX_OK
-        || ngx_auth_require_json_number(b, &db) != NGX_OK)
+    if (ngx_auth_gate_json_number(a, &da) != NGX_OK
+        || ngx_auth_gate_json_number(b, &db) != NGX_OK)
     {
         return NGX_ERROR;
     }
@@ -325,7 +325,7 @@ ngx_auth_require_json_compare(ngx_auth_require_json_t *a,
 
     if (log != NULL) {
         ngx_log_debug2(NGX_LOG_DEBUG_HTTP, log, 0,
-                       "auth_require: numeric comparison using double "
+                       "auth_gate: numeric comparison using double "
                        "fallback (possible precision loss for integers "
                        "> 2^53): %f vs %f", da, db);
     }

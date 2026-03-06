@@ -3,13 +3,13 @@
  * Copyright (c) Bengo4.com, Inc.
  */
 
-#ifndef _NGX_AUTH_REQUIRE_OPERATOR_H_INCLUDED_
-#define _NGX_AUTH_REQUIRE_OPERATOR_H_INCLUDED_
+#ifndef _NGX_AUTH_GATE_OPERATOR_H_INCLUDED_
+#define _NGX_AUTH_GATE_OPERATOR_H_INCLUDED_
 
 #include <ngx_config.h>
 #include <ngx_core.h>
 #include <ngx_http.h>
-#include "ngx_auth_require_json.h"
+#include "ngx_auth_gate_json.h"
 
 /**
  * Operator handler function pointer type
@@ -18,9 +18,9 @@
  * @return NGX_DECLINED condition not satisfied (valid comparison)
  * @return NGX_ERROR    internal error (type mismatch, resource limit, etc.)
  */
-typedef ngx_int_t (*ngx_auth_require_operator_pt)(
-    ngx_auth_require_json_t *actual,
-    ngx_auth_require_json_t *expected,
+typedef ngx_int_t (*ngx_auth_gate_operator_pt)(
+    ngx_auth_gate_json_t *actual,
+    ngx_auth_gate_json_t *expected,
     ngx_pool_t *pool);
 
 /**
@@ -35,8 +35,8 @@ typedef ngx_int_t (*ngx_auth_require_operator_pt)(
  *
  * @return NGX_OK on success, NGX_DECLINED if not found
  */
-ngx_int_t ngx_auth_require_operator_find(ngx_str_t *name,
-    ngx_auth_require_operator_pt *op, ngx_flag_t *negate);
+ngx_int_t ngx_auth_gate_operator_find(ngx_str_t *name,
+    ngx_auth_gate_operator_pt *op, ngx_flag_t *negate);
 
 #if (NGX_PCRE)
 /**
@@ -47,8 +47,8 @@ ngx_int_t ngx_auth_require_operator_find(ngx_str_t *name,
  *
  * @return NGX_OK on match, NGX_DECLINED on no match, NGX_ERROR on limit exceeded
  */
-ngx_int_t ngx_auth_require_regex_exec_limited(ngx_regex_t *re,
+ngx_int_t ngx_auth_gate_regex_exec_limited(ngx_regex_t *re,
     ngx_str_t *s, ngx_log_t *log);
 #endif
 
-#endif /* _NGX_AUTH_REQUIRE_OPERATOR_H_INCLUDED_ */
+#endif /* _NGX_AUTH_GATE_OPERATOR_H_INCLUDED_ */

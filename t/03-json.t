@@ -13,7 +13,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 location / {
   set $val '"hello"';
-  auth_require_json $val . eq "hello";
+  auth_gate_json $val . eq "hello";
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -26,7 +26,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 include $TEST_NGINX_CONF_DIR/variables.conf;
 location / {
-  auth_require_json $json_admin .role eq "admin";
+  auth_gate_json $json_admin .role eq "admin";
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -39,7 +39,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 include $TEST_NGINX_CONF_DIR/variables.conf;
 location / {
-  auth_require_json $json_admin .role eq "guest";
+  auth_gate_json $json_admin .role eq "guest";
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -52,7 +52,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 include $TEST_NGINX_CONF_DIR/variables.conf;
 location / {
-  auth_require_json $json_admin .role !eq "guest";
+  auth_gate_json $json_admin .role !eq "guest";
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -65,7 +65,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 include $TEST_NGINX_CONF_DIR/variables.conf;
 location / {
-  auth_require_json $json_admin .role !eq "admin";
+  auth_gate_json $json_admin .role !eq "admin";
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -78,7 +78,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 include $TEST_NGINX_CONF_DIR/variables.conf;
 location / {
-  auth_require_json $json_guest .sub eq "";
+  auth_gate_json $json_guest .sub eq "";
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -91,7 +91,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 include $TEST_NGINX_CONF_DIR/variables.conf;
 location / {
-  auth_require_json $json_admin .sub !eq "";
+  auth_gate_json $json_admin .sub !eq "";
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -104,7 +104,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 include $TEST_NGINX_CONF_DIR/variables.conf;
 location / {
-  auth_require_json $json_admin .verified eq json=true;
+  auth_gate_json $json_admin .verified eq json=true;
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -117,7 +117,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 include $TEST_NGINX_CONF_DIR/variables.conf;
 location / {
-  auth_require_json $json_guest .verified eq json=true;
+  auth_gate_json $json_guest .verified eq json=true;
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -130,7 +130,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 include $TEST_NGINX_CONF_DIR/variables.conf;
 location / {
-  auth_require_json $json_guest .verified !eq json=true;
+  auth_gate_json $json_guest .verified !eq json=true;
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -143,7 +143,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 include $TEST_NGINX_CONF_DIR/variables.conf;
 location / {
-  auth_require_json $json_admin .verified !eq json=true;
+  auth_gate_json $json_admin .verified !eq json=true;
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -156,7 +156,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 include $TEST_NGINX_CONF_DIR/variables.conf;
 location / {
-  auth_require_json $json_guest .verified eq json=false;
+  auth_gate_json $json_guest .verified eq json=false;
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -169,7 +169,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 include $TEST_NGINX_CONF_DIR/variables.conf;
 location / {
-  auth_require_json $json_admin .verified eq json=false;
+  auth_gate_json $json_admin .verified eq json=false;
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -182,7 +182,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 include $TEST_NGINX_CONF_DIR/variables.conf;
 location / {
-  auth_require_json $json_admin .verified !eq json=false;
+  auth_gate_json $json_admin .verified !eq json=false;
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -195,7 +195,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 location / {
   set $json_with_null '{"status":null,"name":"test"}';
-  auth_require_json $json_with_null .status eq json=null;
+  auth_gate_json $json_with_null .status eq json=null;
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -208,7 +208,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 location / {
   set $json_with_null '{"status":null,"name":"test"}';
-  auth_require_json $json_with_null .name eq json=null;
+  auth_gate_json $json_with_null .name eq json=null;
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -221,7 +221,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 location / {
   set $json_with_null '{"status":null,"name":"test"}';
-  auth_require_json $json_with_null .name !eq json=null;
+  auth_gate_json $json_with_null .name !eq json=null;
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -234,7 +234,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 location / {
   set $json_with_null '{"status":null,"name":"test"}';
-  auth_require_json $json_with_null .status !eq json=null;
+  auth_gate_json $json_with_null .status !eq json=null;
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -247,7 +247,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 include $TEST_NGINX_CONF_DIR/variables.conf;
 location / {
-  auth_require_json $json_admin .age gt json=18;
+  auth_gate_json $json_admin .age gt json=18;
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -260,7 +260,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 include $TEST_NGINX_CONF_DIR/variables.conf;
 location / {
-  auth_require_json $json_guest .age gt json=18;
+  auth_gate_json $json_guest .age gt json=18;
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -273,7 +273,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 include $TEST_NGINX_CONF_DIR/variables.conf;
 location / {
-  auth_require_json $json_admin .age ge json=18;
+  auth_gate_json $json_admin .age ge json=18;
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -286,7 +286,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 include $TEST_NGINX_CONF_DIR/variables.conf;
 location / {
-  auth_require_json $json_admin .age ge json=25;
+  auth_gate_json $json_admin .age ge json=25;
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -299,7 +299,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 include $TEST_NGINX_CONF_DIR/variables.conf;
 location / {
-  auth_require_json $json_admin .age ge json=30;
+  auth_gate_json $json_admin .age ge json=30;
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -312,7 +312,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 include $TEST_NGINX_CONF_DIR/variables.conf;
 location / {
-  auth_require_json $json_guest .age lt json=18;
+  auth_gate_json $json_guest .age lt json=18;
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -325,7 +325,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 include $TEST_NGINX_CONF_DIR/variables.conf;
 location / {
-  auth_require_json $json_admin .age lt json=18;
+  auth_gate_json $json_admin .age lt json=18;
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -338,7 +338,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 include $TEST_NGINX_CONF_DIR/variables.conf;
 location / {
-  auth_require_json $json_guest .age le json=18;
+  auth_gate_json $json_guest .age le json=18;
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -351,7 +351,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 include $TEST_NGINX_CONF_DIR/variables.conf;
 location / {
-  auth_require_json $json_guest .age le json=15;
+  auth_gate_json $json_guest .age le json=15;
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -364,7 +364,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 include $TEST_NGINX_CONF_DIR/variables.conf;
 location / {
-  auth_require_json $json_admin .age le json=18;
+  auth_gate_json $json_admin .age le json=18;
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -377,7 +377,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 include $TEST_NGINX_CONF_DIR/variables.conf;
 location / {
-  auth_require_json $json_admin .role in json=["staff","admin","viewer"];
+  auth_gate_json $json_admin .role in json=["staff","admin","viewer"];
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -390,7 +390,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 include $TEST_NGINX_CONF_DIR/variables.conf;
 location / {
-  auth_require_json $json_guest .role in json=["staff","admin"];
+  auth_gate_json $json_guest .role in json=["staff","admin"];
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -403,7 +403,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 include $TEST_NGINX_CONF_DIR/variables.conf;
 location / {
-  auth_require_json $json_guest .role !in json=["staff","admin"];
+  auth_gate_json $json_guest .role !in json=["staff","admin"];
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -416,7 +416,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 include $TEST_NGINX_CONF_DIR/variables.conf;
 location / {
-  auth_require_json $json_admin .role !in json=["staff","admin"];
+  auth_gate_json $json_admin .role !in json=["staff","admin"];
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -429,7 +429,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 include $TEST_NGINX_CONF_DIR/variables.conf;
 location / {
-  auth_require_json $json_admin .groups any json=["staff","viewer"];
+  auth_gate_json $json_admin .groups any json=["staff","viewer"];
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -442,7 +442,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 include $TEST_NGINX_CONF_DIR/variables.conf;
 location / {
-  auth_require_json $json_admin .groups any json=["viewer","manager"];
+  auth_gate_json $json_admin .groups any json=["viewer","manager"];
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -455,7 +455,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 include $TEST_NGINX_CONF_DIR/variables.conf;
 location / {
-  auth_require_json $json_admin .groups !any json=["viewer","manager"];
+  auth_gate_json $json_admin .groups !any json=["viewer","manager"];
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -468,7 +468,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 include $TEST_NGINX_CONF_DIR/variables.conf;
 location / {
-  auth_require_json $json_admin .groups !any json=["staff","viewer"];
+  auth_gate_json $json_admin .groups !any json=["staff","viewer"];
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -481,7 +481,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 include $TEST_NGINX_CONF_DIR/variables.conf;
 location / {
-  auth_require_json $json_admin .email match "@example\.com";
+  auth_gate_json $json_admin .email match "@example\.com";
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -494,7 +494,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 include $TEST_NGINX_CONF_DIR/variables.conf;
 location / {
-  auth_require_json $json_guest .email match "@example\.com";
+  auth_gate_json $json_guest .email match "@example\.com";
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -507,7 +507,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 include $TEST_NGINX_CONF_DIR/variables.conf;
 location / {
-  auth_require_json $json_guest .email !match "@example\.com";
+  auth_gate_json $json_guest .email !match "@example\.com";
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -520,7 +520,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 include $TEST_NGINX_CONF_DIR/variables.conf;
 location / {
-  auth_require_json $json_admin .nested.key eq "value";
+  auth_gate_json $json_admin .nested.key eq "value";
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -533,7 +533,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 include $TEST_NGINX_CONF_DIR/variables.conf;
 location / {
-  auth_require_json $json_admin .nested.key eq "wrong";
+  auth_gate_json $json_admin .nested.key eq "wrong";
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -546,7 +546,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 include $TEST_NGINX_CONF_DIR/variables.conf;
 location / {
-  auth_require_json $json_admin .keys[0] eq "primary";
+  auth_gate_json $json_admin .keys[0] eq "primary";
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -559,7 +559,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 include $TEST_NGINX_CONF_DIR/variables.conf;
 location / {
-  auth_require_json $json_admin .keys[1] eq "secondary";
+  auth_gate_json $json_admin .keys[1] eq "secondary";
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -572,7 +572,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 include $TEST_NGINX_CONF_DIR/variables.conf;
 location / {
-  auth_require_json $json_admin .keys[0] eq "secondary";
+  auth_gate_json $json_admin .keys[0] eq "secondary";
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -585,7 +585,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 include $TEST_NGINX_CONF_DIR/variables.conf;
 location / {
-  auth_require_json $json_admin .nonexistent eq "value";
+  auth_gate_json $json_admin .nonexistent eq "value";
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -598,7 +598,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 location / {
   set $bad_json "not json";
-  auth_require_json $bad_json .field eq "value";
+  auth_gate_json $bad_json .field eq "value";
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -611,7 +611,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 include $TEST_NGINX_CONF_DIR/variables.conf;
 location / {
-  auth_require_json $json_guest .role eq "admin" error=401;
+  auth_gate_json $json_guest .role eq "admin" error=401;
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -624,8 +624,8 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 include $TEST_NGINX_CONF_DIR/variables.conf;
 location / {
-  auth_require_json $json_admin .role eq "admin";
-  auth_require_json $json_admin .age ge json=18;
+  auth_gate_json $json_admin .role eq "admin";
+  auth_gate_json $json_admin .age ge json=18;
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -638,8 +638,8 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 include $TEST_NGINX_CONF_DIR/variables.conf;
 location / {
-  auth_require_json $json_admin .role eq "admin";
-  auth_require_json $json_admin .age lt json=18 error=403;
+  auth_gate_json $json_admin .role eq "admin";
+  auth_gate_json $json_admin .age lt json=18 error=403;
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -652,7 +652,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 include $TEST_NGINX_CONF_DIR/variables.conf;
 location / {
-  auth_require_json $json_admin .age eq json=25;
+  auth_gate_json $json_admin .age eq json=25;
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -665,7 +665,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 include $TEST_NGINX_CONF_DIR/variables.conf;
 location / {
-  auth_require_json $json_admin .age eq json=30;
+  auth_gate_json $json_admin .age eq json=30;
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -678,7 +678,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 include $TEST_NGINX_CONF_DIR/variables.conf;
 location / {
-  auth_require_json $json_admin .groups eq json=["admin","staff"];
+  auth_gate_json $json_admin .groups eq json=["admin","staff"];
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -691,7 +691,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 include $TEST_NGINX_CONF_DIR/variables.conf;
 location / {
-  auth_require_json $json_admin .groups eq json=["admin"];
+  auth_gate_json $json_admin .groups eq json=["admin"];
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -704,9 +704,9 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 include $TEST_NGINX_CONF_DIR/variables.conf;
 location / {
-  auth_require_json $json_admin .role eq "admin";
-  auth_require_json $json_admin .age ge json=18;
-  auth_require_json $json_admin .verified eq json=true;
+  auth_gate_json $json_admin .role eq "admin";
+  auth_gate_json $json_admin .age ge json=18;
+  auth_gate_json $json_admin .verified eq json=true;
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -719,9 +719,9 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 include $TEST_NGINX_CONF_DIR/variables.conf;
 location / {
-  auth_require_json $json_admin .role eq "admin";
-  auth_require_json $json_admin .age lt json=18;
-  auth_require_json $json_admin .verified eq json=true;
+  auth_gate_json $json_admin .role eq "admin";
+  auth_gate_json $json_admin .age lt json=18;
+  auth_gate_json $json_admin .verified eq json=true;
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -734,8 +734,8 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 include $TEST_NGINX_CONF_DIR/variables.conf;
 location / {
-  auth_require_json $json_admin .role eq "admin";
-  auth_require_json $json_admin .age gt json=30 error=401;
+  auth_gate_json $json_admin .role eq "admin";
+  auth_gate_json $json_admin .age gt json=30 error=401;
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -748,9 +748,9 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 include $TEST_NGINX_CONF_DIR/variables.conf;
 location / {
-  auth_require_json $json_admin .role eq "admin";
-  auth_require_json $json_guest .role eq "guest";
-  auth_require_json $json_admin .age ge json=18;
+  auth_gate_json $json_admin .role eq "admin";
+  auth_gate_json $json_guest .role eq "guest";
+  auth_gate_json $json_admin .age ge json=18;
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -763,9 +763,9 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 include $TEST_NGINX_CONF_DIR/variables.conf;
 location / {
-  auth_require_json $json_admin .role eq "admin";
-  auth_require_json $json_guest .role eq "admin";
-  auth_require_json $json_admin .age ge json=18;
+  auth_gate_json $json_admin .role eq "admin";
+  auth_gate_json $json_guest .role eq "admin";
+  auth_gate_json $json_admin .age ge json=18;
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -777,9 +777,9 @@ GET /
 include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 include $TEST_NGINX_CONF_DIR/variables.conf;
-auth_require_json $json_admin .role eq "admin";
+auth_gate_json $json_admin .role eq "admin";
 location / {
-  auth_require_json $json_admin .age ge json=18;
+  auth_gate_json $json_admin .age ge json=18;
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -791,9 +791,9 @@ GET /
 include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 include $TEST_NGINX_CONF_DIR/variables.conf;
-auth_require_json $json_admin .role eq "admin";
+auth_gate_json $json_admin .role eq "admin";
 location / {
-  auth_require_json $json_admin .age gt json=30;
+  auth_gate_json $json_admin .age gt json=30;
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -806,7 +806,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 location / {
   set $val '{"a\\"b":"found"}';
-  auth_require_json $val '.["a\\"b"]' eq "found";
+  auth_gate_json $val '.["a\\"b"]' eq "found";
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -819,7 +819,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 location / {
   set $val '{"a\\\\b":"found"}';
-  auth_require_json $val '.["a\\\\b"]' eq "found";
+  auth_gate_json $val '.["a\\\\b"]' eq "found";
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -832,7 +832,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 location / {
   set $val '42';
-  auth_require_json $val . eq json=42;
+  auth_gate_json $val . eq json=42;
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -845,7 +845,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 location / {
   set $val '"just_a_string"';
-  auth_require_json $val .key eq "anything";
+  auth_gate_json $val .key eq "anything";
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -858,7 +858,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 location / {
   set $val '{"id":9007199254740993}';
-  auth_require_json $val .id gt json=9007199254740992;
+  auth_gate_json $val .id gt json=9007199254740992;
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -871,7 +871,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 location / {
   set $val '{"id":9007199254740993}';
-  auth_require_json $val .id eq json=9007199254740993;
+  auth_gate_json $val .id eq json=9007199254740993;
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -884,7 +884,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 location / {
   set $val '{"id":9007199254740992}';
-  auth_require_json $val .id lt json=9007199254740993;
+  auth_gate_json $val .id lt json=9007199254740993;
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -897,7 +897,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 location / {
   set $val '{"role":"admin"}';
-  auth_require_json $val .role in json=[];
+  auth_gate_json $val .role in json=[];
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -910,7 +910,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 location / {
   set $val '{"tags":[]}';
-  auth_require_json $val .tags any json=["a"];
+  auth_gate_json $val .tags any json=["a"];
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -923,7 +923,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 location / {
   set $val '{"role":"admin"}';
-  auth_require_json $val .role !in json=[];
+  auth_gate_json $val .role !in json=[];
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -936,7 +936,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 location / {
   set $val '{"a":[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90,91,92,93,94,95,96,97,98,99,100,101]}';
-  auth_require_json $val .a any json=[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90,91,92,93,94,95,96,97,98,99,100,101];
+  auth_gate_json $val .a any json=[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90,91,92,93,94,95,96,97,98,99,100,101];
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -949,7 +949,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 location / {
   set $val '{"x":100}';
-  auth_require_json $val .x ge json=100.0;
+  auth_gate_json $val .x ge json=100.0;
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -962,7 +962,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 location / {
   set $val '{"x":101}';
-  auth_require_json $val .x gt json=100.0;
+  auth_gate_json $val .x gt json=100.0;
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -975,7 +975,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 location / {
   set $json '{"key":"value"}';
-  auth_require_json $json '.["ke\\ny"]' eq "value";
+  auth_gate_json $json '.["ke\\ny"]' eq "value";
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- must_die
@@ -986,7 +986,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 location / {
   set $json '{"x":-5}';
-  auth_require_json $json .x gt json=-10;
+  auth_gate_json $json .x gt json=-10;
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -999,7 +999,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 location / {
   set $json '{"x":-5}';
-  auth_require_json $json .x lt json=-10;
+  auth_gate_json $json .x lt json=-10;
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request

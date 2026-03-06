@@ -3,31 +3,31 @@
  * Copyright (c) Bengo4.com, Inc.
  */
 
-#ifndef _NGX_AUTH_REQUIRE_FIELD_H_INCLUDED_
-#define _NGX_AUTH_REQUIRE_FIELD_H_INCLUDED_
+#ifndef _NGX_AUTH_GATE_FIELD_H_INCLUDED_
+#define _NGX_AUTH_GATE_FIELD_H_INCLUDED_
 
 #include <ngx_config.h>
 #include <ngx_core.h>
 #include <ngx_http.h>
-#include "ngx_auth_require_json.h"
+#include "ngx_auth_gate_json.h"
 
 /** Field segment type */
 typedef enum {
-    NGX_AUTH_REQUIRE_FIELD_KEY = 0,   /* object key */
-    NGX_AUTH_REQUIRE_FIELD_INDEX      /* array index */
-} ngx_auth_require_field_type_t;
+    NGX_AUTH_GATE_FIELD_KEY = 0,   /* object key */
+    NGX_AUTH_GATE_FIELD_INDEX      /* array index */
+} ngx_auth_gate_field_type_t;
 
 /** Single segment of a field path */
 typedef struct {
-    ngx_auth_require_field_type_t  type;
-    ngx_str_t                      key;     /* key name (KEY type) */
-    size_t                         index;   /* array index (INDEX type) */
-} ngx_auth_require_field_segment_t;
+    ngx_auth_gate_field_type_t  type;
+    ngx_str_t                   key;        /* key name (KEY type) */
+    size_t                      index;      /* array index (INDEX type) */
+} ngx_auth_gate_field_segment_t;
 
 /** Parsed field path */
 typedef struct {
-    ngx_array_t *segments;     /* ngx_auth_require_field_segment_t array */
-} ngx_auth_require_field_path_t;
+    ngx_array_t *segments;     /* ngx_auth_gate_field_segment_t array */
+} ngx_auth_gate_field_path_t;
 
 /*
  * Empty segments array means "root" (the "." path).
@@ -49,8 +49,8 @@ typedef struct {
  *
  * @return NGX_OK on success, NGX_ERROR on parse error
  */
-ngx_int_t ngx_auth_require_field_parse(ngx_pool_t *pool,
-    ngx_str_t *raw, ngx_auth_require_field_path_t *path);
+ngx_int_t ngx_auth_gate_field_parse(ngx_pool_t *pool,
+    ngx_str_t *raw, ngx_auth_gate_field_path_t *path);
 
 /**
  * Extract a field value from a JSON tree (called at request time)
@@ -62,9 +62,9 @@ ngx_int_t ngx_auth_require_field_parse(ngx_pool_t *pool,
  *
  * @return JSON value at the path, or NULL if not found
  */
-ngx_auth_require_json_t *ngx_auth_require_field_get(
-    ngx_auth_require_json_t *root,
-    ngx_auth_require_field_path_t *path);
+ngx_auth_gate_json_t *ngx_auth_gate_field_get(
+    ngx_auth_gate_json_t *root,
+    ngx_auth_gate_field_path_t *path);
 
 /**
  * Reconstruct field path string from parsed segments (for log messages)
@@ -74,7 +74,7 @@ ngx_auth_require_json_t *ngx_auth_require_field_get(
  *
  * @return reconstructed path string, or {0, NULL} on allocation failure
  */
-ngx_str_t ngx_auth_require_field_path_str(ngx_auth_require_field_path_t *field,
+ngx_str_t ngx_auth_gate_field_path_str(ngx_auth_gate_field_path_t *field,
     ngx_pool_t *pool);
 
-#endif /* _NGX_AUTH_REQUIRE_FIELD_H_INCLUDED_ */
+#endif /* _NGX_AUTH_GATE_FIELD_H_INCLUDED_ */

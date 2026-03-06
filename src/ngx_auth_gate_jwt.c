@@ -2,7 +2,7 @@
  * Copyright (c) Tatsuya Kamijo
  * Copyright (c) Bengo4.com, Inc.
  *
- * JWT payload decoding for auth_require module
+ * JWT payload decoding for auth_gate module
  *
  * Extracts and decodes the JWT payload segment (base64url).
  * No signature verification is performed — authentication is
@@ -15,7 +15,7 @@
 #include <ngx_core.h>
 #include <ngx_http.h>
 
-#include "ngx_auth_require_jwt.h"
+#include "ngx_auth_gate_jwt.h"
 
 
 static ngx_int_t
@@ -61,13 +61,13 @@ jwt_find_payload(ngx_str_t *token, ngx_str_t *payload_b64)
 }
 
 
-ngx_auth_require_json_t *
-ngx_auth_require_jwt_decode_payload(ngx_str_t *token, ngx_pool_t *pool)
+ngx_auth_gate_json_t *
+ngx_auth_gate_jwt_decode_payload(ngx_str_t *token, ngx_pool_t *pool)
 {
     u_char *decoded;
     ngx_str_t payload_b64, payload;
     size_t decoded_len;
-    ngx_auth_require_json_t *json;
+    ngx_auth_gate_json_t *json;
 
     if (token == NULL || token->data == NULL || token->len == 0
         || pool == NULL)
@@ -75,9 +75,9 @@ ngx_auth_require_jwt_decode_payload(ngx_str_t *token, ngx_pool_t *pool)
         return NULL;
     }
 
-    if (token->len > NGX_AUTH_REQUIRE_MAX_JWT_LENGTH) {
+    if (token->len > NGX_AUTH_GATE_MAX_JWT_LENGTH) {
         ngx_log_error(NGX_LOG_ERR, pool->log, 0,
-                      "auth_require_jwt: token too large: %uz",
+                      "auth_gate_jwt: token too large: %uz",
                       token->len);
         return NULL;
     }
@@ -85,7 +85,7 @@ ngx_auth_require_jwt_decode_payload(ngx_str_t *token, ngx_pool_t *pool)
     /* Find the payload segment between dots */
     if (jwt_find_payload(token, &payload_b64) != NGX_OK) {
         ngx_log_error(NGX_LOG_ERR, pool->log, 0,
-                      "auth_require_jwt: invalid JWT format");
+                      "auth_gate_jwt: invalid JWT format");
         return NULL;
     }
 
@@ -99,14 +99,14 @@ ngx_auth_require_jwt_decode_payload(ngx_str_t *token, ngx_pool_t *pool)
 
     if (ngx_decode_base64url(&payload, &payload_b64) != NGX_OK) {
         ngx_log_error(NGX_LOG_ERR, pool->log, 0,
-                      "auth_require_jwt: base64url decode failed");
+                      "auth_gate_jwt: base64url decode failed");
         ngx_memzero(decoded, decoded_len + 1);
         return NULL;
     }
 
     payload.data[payload.len] = '\0';
 
-    json = ngx_auth_require_json_parse(&payload);
+    json = ngx_auth_gate_json_parse(&payload);
 
     /*
      * Clear decoded payload to minimize sensitive data residency in memory.
@@ -119,7 +119,7 @@ ngx_auth_require_jwt_decode_payload(ngx_str_t *token, ngx_pool_t *pool)
 
     if (json == NULL) {
         ngx_log_error(NGX_LOG_ERR, pool->log, 0,
-                      "auth_require_jwt: payload JSON parse failed");
+                      "auth_gate_jwt: payload JSON parse failed");
         return NULL;
     }
 

@@ -7,33 +7,33 @@
 #include <ngx_core.h>
 #include <ngx_http.h>
 
-#include "ngx_http_auth_require_module.h"
-#include "ngx_auth_require_json.h"
-#include "ngx_auth_require_jwt.h"
+#include "ngx_http_auth_gate_module.h"
+#include "ngx_auth_gate_json.h"
+#include "ngx_auth_gate_jwt.h"
 
-#define NGX_HTTP_AUTH_REQUIRE_DEFAULT_ERROR  NGX_HTTP_FORBIDDEN
-#define NGX_HTTP_AUTH_REQUIRE_JSON_PREFIX_LEN  5
+#define NGX_HTTP_AUTH_GATE_DEFAULT_ERROR  NGX_HTTP_FORBIDDEN
+#define NGX_HTTP_AUTH_GATE_JSON_PREFIX_LEN  5
 
 /* Maximum dynamic PCRE compilations per request */
-#define NGX_HTTP_AUTH_REQUIRE_MAX_DYNAMIC_REGEX  16
+#define NGX_HTTP_AUTH_GATE_MAX_DYNAMIC_REGEX  16
 
 /* Maximum expected value size (bytes) to prevent DoS via large JSON parse */
-#define NGX_HTTP_AUTH_REQUIRE_MAX_EXPECTED_SIZE  65536
+#define NGX_HTTP_AUTH_GATE_MAX_EXPECTED_SIZE  65536
 
 /* Configuration lifecycle */
-static void *ngx_http_auth_require_create_loc_conf(ngx_conf_t *cf);
-static char *ngx_http_auth_require_merge_loc_conf(ngx_conf_t *cf, void *parent,
+static void *ngx_http_auth_gate_create_loc_conf(ngx_conf_t *cf);
+static char *ngx_http_auth_gate_merge_loc_conf(ngx_conf_t *cf, void *parent,
     void *child);
 
 /* Module initialization */
-static ngx_int_t ngx_http_auth_require_init(ngx_conf_t *cf);
+static ngx_int_t ngx_http_auth_gate_init(ngx_conf_t *cf);
 
 /* Directive handlers */
-static char *ngx_http_auth_require_conf_set_require(ngx_conf_t *cf,
+static char *ngx_http_auth_gate_conf_set_require(ngx_conf_t *cf,
     ngx_command_t *cmd, void *conf);
-static char *ngx_http_auth_require_conf_set_json(ngx_conf_t *cf,
+static char *ngx_http_auth_gate_conf_set_json(ngx_conf_t *cf,
     ngx_command_t *cmd, void *conf);
-static char *ngx_http_auth_require_conf_set_jwt(ngx_conf_t *cf,
+static char *ngx_http_auth_gate_conf_set_jwt(ngx_conf_t *cf,
     ngx_command_t *cmd, void *conf);
 
 /* Variable handler */
@@ -41,25 +41,25 @@ static ngx_int_t require_variable_epoch(ngx_http_request_t *r,
     ngx_http_variable_value_t *v, uintptr_t data);
 
 /* Access handler */
-static ngx_int_t ngx_http_auth_require_access_handler(ngx_http_request_t *r);
+static ngx_int_t ngx_http_auth_gate_access_handler(ngx_http_request_t *r);
 
 /* Internal validation functions */
 static ngx_int_t require_validate_vars(ngx_http_request_t *r,
-    ngx_http_auth_require_loc_conf_t *lcf);
+    ngx_http_auth_gate_loc_conf_t *lcf);
 static ngx_int_t require_validate_compare(ngx_http_request_t *r,
-    ngx_http_auth_require_loc_conf_t *lcf);
+    ngx_http_auth_gate_loc_conf_t *lcf);
 static ngx_int_t require_validate_json(ngx_http_request_t *r,
-    ngx_http_auth_require_loc_conf_t *lcf);
+    ngx_http_auth_gate_loc_conf_t *lcf);
 static ngx_int_t require_validate_jwt(ngx_http_request_t *r,
-    ngx_http_auth_require_loc_conf_t *lcf);
+    ngx_http_auth_gate_loc_conf_t *lcf);
 static ngx_int_t require_validate_requirement(ngx_http_request_t *r,
-    ngx_auth_require_requirement_t *req, ngx_auth_require_json_t *root);
+    ngx_auth_gate_requirement_t *req, ngx_auth_gate_json_t *root);
 
 /* Configuration parsing helpers */
 static ngx_int_t require_parse_error(ngx_conf_t *cf, ngx_str_t *value,
     ngx_int_t *error);
 static char *require_parse_requirement(ngx_conf_t *cf, ngx_str_t *args,
-    ngx_uint_t nargs, ngx_auth_require_requirement_t *req,
+    ngx_uint_t nargs, ngx_auth_gate_requirement_t *req,
     ngx_flag_t parse_field);
 
 /* Configuration merge helpers */
@@ -69,14 +69,14 @@ static ngx_int_t require_merge_groups(ngx_conf_t *cf, ngx_array_t **prev,
     ngx_array_t **conf);
 
 /* Variable group helpers */
-static ngx_auth_require_var_group_t *require_find_group(ngx_array_t *groups,
+static ngx_auth_gate_var_group_t *require_find_group(ngx_array_t *groups,
     ngx_str_t *variable_name);
 
 
 /* Variable definitions */
 static ngx_http_variable_t require_vars[] = {
 
-    { ngx_string("auth_require_epoch"), NULL,
+    { ngx_string("auth_gate_epoch"), NULL,
       require_variable_epoch,
       0, NGX_HTTP_VAR_NOCACHEABLE, 0 },
 
@@ -84,28 +84,28 @@ static ngx_http_variable_t require_vars[] = {
 };
 
 
-static ngx_command_t ngx_http_auth_require_commands[] = {
+static ngx_command_t ngx_http_auth_gate_commands[] = {
 
-    { ngx_string("auth_require"),
+    { ngx_string("auth_gate"),
       NGX_HTTP_MAIN_CONF | NGX_HTTP_SRV_CONF | NGX_HTTP_LOC_CONF
       | NGX_HTTP_LMT_CONF | NGX_CONF_1MORE,
-      ngx_http_auth_require_conf_set_require,
+      ngx_http_auth_gate_conf_set_require,
       NGX_HTTP_LOC_CONF_OFFSET,
       0,
       NULL },
 
-    { ngx_string("auth_require_json"),
+    { ngx_string("auth_gate_json"),
       NGX_HTTP_MAIN_CONF | NGX_HTTP_SRV_CONF | NGX_HTTP_LOC_CONF
       | NGX_HTTP_LMT_CONF | NGX_CONF_2MORE,
-      ngx_http_auth_require_conf_set_json,
+      ngx_http_auth_gate_conf_set_json,
       NGX_HTTP_LOC_CONF_OFFSET,
       0,
       NULL },
 
-    { ngx_string("auth_require_jwt"),
+    { ngx_string("auth_gate_jwt"),
       NGX_HTTP_MAIN_CONF | NGX_HTTP_SRV_CONF | NGX_HTTP_LOC_CONF
       | NGX_HTTP_LMT_CONF | NGX_CONF_2MORE,
-      ngx_http_auth_require_conf_set_jwt,
+      ngx_http_auth_gate_conf_set_jwt,
       NGX_HTTP_LOC_CONF_OFFSET,
       0,
       NULL },
@@ -113,21 +113,21 @@ static ngx_command_t ngx_http_auth_require_commands[] = {
     ngx_null_command
 };
 
-static ngx_http_module_t ngx_http_auth_require_module_ctx = {
+static ngx_http_module_t ngx_http_auth_gate_module_ctx = {
     NULL,                                   /* preconfiguration */
-    ngx_http_auth_require_init,             /* postconfiguration */
+    ngx_http_auth_gate_init,             /* postconfiguration */
     NULL,                                   /* create main configuration */
     NULL,                                   /* init main configuration */
     NULL,                                   /* create server configuration */
     NULL,                                   /* merge server configuration */
-    ngx_http_auth_require_create_loc_conf,  /* create location configuration */
-    ngx_http_auth_require_merge_loc_conf    /* merge location configuration */
+    ngx_http_auth_gate_create_loc_conf,  /* create location configuration */
+    ngx_http_auth_gate_merge_loc_conf    /* merge location configuration */
 };
 
-ngx_module_t ngx_http_auth_require_module = {
+ngx_module_t ngx_http_auth_gate_module = {
     NGX_MODULE_V1,
-    &ngx_http_auth_require_module_ctx,  /* module context */
-    ngx_http_auth_require_commands,     /* module directives */
+    &ngx_http_auth_gate_module_ctx,  /* module context */
+    ngx_http_auth_gate_commands,     /* module directives */
     NGX_HTTP_MODULE,                    /* module type */
     NULL,                               /* init master */
     NULL,                               /* init module */
@@ -143,19 +143,19 @@ ngx_module_t ngx_http_auth_require_module = {
 /*
  * ACCESS phase handler
  *
- * Evaluates all auth_require directives in order:
+ * Evaluates all auth_gate directives in order:
  * 1. require_vars (boolean check mode)
- * 2. require_compare (auth_require with operator)
- * 3. require_json (auth_require_json)
- * 4. require_jwt (auth_require_jwt)
+ * 2. require_compare (auth_gate with operator)
+ * 3. require_json (auth_gate_json)
+ * 4. require_jwt (auth_gate_jwt)
  */
 static ngx_int_t
-ngx_http_auth_require_access_handler(ngx_http_request_t *r)
+ngx_http_auth_gate_access_handler(ngx_http_request_t *r)
 {
     ngx_int_t rc;
-    ngx_http_auth_require_loc_conf_t *lcf;
+    ngx_http_auth_gate_loc_conf_t *lcf;
 
-    lcf = ngx_http_get_module_loc_conf(r, ngx_http_auth_require_module);
+    lcf = ngx_http_get_module_loc_conf(r, ngx_http_auth_gate_module);
 
     if (lcf->require_vars == NULL
         && lcf->require_compare == NULL
@@ -166,7 +166,7 @@ ngx_http_auth_require_access_handler(ngx_http_request_t *r)
     }
 
     ngx_log_debug0(NGX_LOG_DEBUG_HTTP, r->connection->log, 0,
-                   "auth_require: access handler");
+                   "auth_gate: access handler");
 
     /* 1. Boolean check mode */
     if (lcf->require_vars != NULL) {
@@ -210,11 +210,11 @@ ngx_http_auth_require_access_handler(ngx_http_request_t *r)
  */
 static ngx_int_t
 require_validate_vars(ngx_http_request_t *r,
-    ngx_http_auth_require_loc_conf_t *lcf)
+    ngx_http_auth_gate_loc_conf_t *lcf)
 {
     ngx_uint_t i, j;
     ngx_str_t val;
-    ngx_http_auth_require_var_t *vars;
+    ngx_http_auth_gate_var_t *vars;
     ngx_http_complex_value_t *values;
 
     vars = lcf->require_vars->elts;
@@ -226,7 +226,7 @@ require_validate_vars(ngx_http_request_t *r,
 
             if (ngx_http_complex_value(r, &values[j], &val) != NGX_OK) {
                 ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
-                              "auth_require: failed to evaluate variable "
+                              "auth_gate: failed to evaluate variable "
                               "(var #%ui of %ui)",
                               j + 1, vars[i].values->nelts);
                 return vars[i].error;
@@ -237,7 +237,7 @@ require_validate_vars(ngx_http_request_t *r,
                 || (val.len == 1 && val.data[0] == '0'))
             {
                 ngx_log_error(NGX_LOG_WARN, r->connection->log, 0,
-                              "auth_require: variable check failed "
+                              "auth_gate: variable check failed "
                               "(var #%ui of %ui)",
                               j + 1, vars[i].values->nelts);
                 return vars[i].error;
@@ -250,7 +250,7 @@ require_validate_vars(ngx_http_request_t *r,
 
 
 /*
- * Validate auth_require comparison mode.
+ * Validate auth_gate comparison mode.
  * Variable value is wrapped as a JSON string for operator comparison.
  *
  * Memory ownership:
@@ -259,13 +259,13 @@ require_validate_vars(ngx_http_request_t *r,
  */
 static ngx_int_t
 require_validate_compare(ngx_http_request_t *r,
-    ngx_http_auth_require_loc_conf_t *lcf)
+    ngx_http_auth_gate_loc_conf_t *lcf)
 {
     ngx_uint_t i;
     ngx_int_t rc;
     ngx_str_t val;
-    ngx_auth_require_requirement_t *reqs;
-    ngx_auth_require_json_t *actual;
+    ngx_auth_gate_requirement_t *reqs;
+    ngx_auth_gate_json_t *actual;
 
     reqs = lcf->require_compare->elts;
 
@@ -273,21 +273,21 @@ require_validate_compare(ngx_http_request_t *r,
 
         if (ngx_http_complex_value(r, reqs[i].variable, &val) != NGX_OK) {
             ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
-                          "auth_require: failed to evaluate variable");
+                          "auth_gate: failed to evaluate variable");
             return reqs[i].error;
         }
 
         /* Wrap string value as JSON string for comparison */
-        actual = ngx_auth_require_json_from_string(&val);
+        actual = ngx_auth_gate_json_from_string(&val);
         if (actual == NULL) {
             ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
-                          "auth_require: failed to create JSON "
+                          "auth_gate: failed to create JSON "
                           "from variable value");
             return reqs[i].error;
         }
 
         rc = require_validate_requirement(r, &reqs[i], actual);
-        ngx_auth_require_json_free(actual);
+        ngx_auth_gate_json_free(actual);
 
         if (rc != NGX_OK) {
             return rc;
@@ -299,19 +299,19 @@ require_validate_compare(ngx_http_request_t *r,
 
 
 /*
- * Validate auth_require_json directives.
+ * Validate auth_gate_json directives.
  * Variable value is parsed once per group, then all requirements validated.
  */
 static ngx_int_t
 require_validate_json(ngx_http_request_t *r,
-    ngx_http_auth_require_loc_conf_t *lcf)
+    ngx_http_auth_gate_loc_conf_t *lcf)
 {
     ngx_uint_t i, j;
     ngx_int_t rc;
     ngx_str_t val;
-    ngx_auth_require_var_group_t *groups;
-    ngx_auth_require_requirement_t *reqs;
-    ngx_auth_require_json_t *json;
+    ngx_auth_gate_var_group_t *groups;
+    ngx_auth_gate_requirement_t *reqs;
+    ngx_auth_gate_json_t *json;
 
     groups = lcf->require_json->elts;
 
@@ -319,7 +319,7 @@ require_validate_json(ngx_http_request_t *r,
 
         if (ngx_http_complex_value(r, groups[i].variable, &val) != NGX_OK) {
             ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
-                          "auth_require_json: failed to evaluate variable");
+                          "auth_gate_json: failed to evaluate variable");
             reqs = groups[i].requirements->elts;
             /*
              * Use reqs[0].error: variable evaluation failed before any
@@ -329,28 +329,28 @@ require_validate_json(ngx_http_request_t *r,
             return reqs[0].error;
         }
 
-        json = ngx_auth_require_json_parse(&val);
+        json = ngx_auth_gate_json_parse(&val);
         if (json == NULL) {
             ngx_log_error(NGX_LOG_WARN, r->connection->log, 0,
-                          "auth_require_json: JSON parse failed");
+                          "auth_gate_json: JSON parse failed");
             reqs = groups[i].requirements->elts;
             /* Same rationale as variable evaluation failure above */
             return reqs[0].error;
         }
 
-        if (!ngx_auth_require_json_is_object(json)
-            && !ngx_auth_require_json_is_array(json))
+        if (!ngx_auth_gate_json_is_object(json)
+            && !ngx_auth_gate_json_is_array(json))
         {
             reqs = groups[i].requirements->elts;
 
             for (j = 0; j < groups[i].requirements->nelts; j++) {
                 if (reqs[j].field.segments->nelts > 0) {
                     ngx_log_error(NGX_LOG_WARN, r->connection->log, 0,
-                                  "auth_require_json: parsed value is a "
+                                  "auth_gate_json: parsed value is a "
                                   "scalar (type=%d); field path requires "
                                   "an object or array as root value",
-                                  ngx_auth_require_json_type(json));
-                    ngx_auth_require_json_free(json);
+                                  ngx_auth_gate_json_type(json));
+                    ngx_auth_gate_json_free(json);
                     return reqs[j].error;
                 }
             }
@@ -361,12 +361,12 @@ require_validate_json(ngx_http_request_t *r,
         for (j = 0; j < groups[i].requirements->nelts; j++) {
             rc = require_validate_requirement(r, &reqs[j], json);
             if (rc != NGX_OK) {
-                ngx_auth_require_json_free(json);
+                ngx_auth_gate_json_free(json);
                 return rc;
             }
         }
 
-        ngx_auth_require_json_free(json);
+        ngx_auth_gate_json_free(json);
     }
 
     return NGX_OK;
@@ -374,19 +374,19 @@ require_validate_json(ngx_http_request_t *r,
 
 
 /*
- * Validate auth_require_jwt directives.
+ * Validate auth_gate_jwt directives.
  * Variable value is decoded once per group, then all requirements validated.
  */
 static ngx_int_t
 require_validate_jwt(ngx_http_request_t *r,
-    ngx_http_auth_require_loc_conf_t *lcf)
+    ngx_http_auth_gate_loc_conf_t *lcf)
 {
     ngx_uint_t i, j;
     ngx_int_t rc;
     ngx_str_t val;
-    ngx_auth_require_var_group_t *groups;
-    ngx_auth_require_requirement_t *reqs;
-    ngx_auth_require_json_t *json;
+    ngx_auth_gate_var_group_t *groups;
+    ngx_auth_gate_requirement_t *reqs;
+    ngx_auth_gate_json_t *json;
 
     groups = lcf->require_jwt->elts;
 
@@ -394,7 +394,7 @@ require_validate_jwt(ngx_http_request_t *r,
 
         if (ngx_http_complex_value(r, groups[i].variable, &val) != NGX_OK) {
             ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
-                          "auth_require_jwt: failed to evaluate variable");
+                          "auth_gate_jwt: failed to evaluate variable");
             reqs = groups[i].requirements->elts;
             /*
              * Use reqs[0].error: variable evaluation failed before any
@@ -404,7 +404,7 @@ require_validate_jwt(ngx_http_request_t *r,
             return reqs[0].error;
         }
 
-        json = ngx_auth_require_jwt_decode_payload(&val, r->pool);
+        json = ngx_auth_gate_jwt_decode_payload(&val, r->pool);
         if (json == NULL) {
             /* Specific failure reason already logged by decode function */
             reqs = groups[i].requirements->elts;
@@ -412,19 +412,19 @@ require_validate_jwt(ngx_http_request_t *r,
             return reqs[0].error;
         }
 
-        if (!ngx_auth_require_json_is_object(json)
-            && !ngx_auth_require_json_is_array(json))
+        if (!ngx_auth_gate_json_is_object(json)
+            && !ngx_auth_gate_json_is_array(json))
         {
             reqs = groups[i].requirements->elts;
 
             for (j = 0; j < groups[i].requirements->nelts; j++) {
                 if (reqs[j].field.segments->nelts > 0) {
                     ngx_log_error(NGX_LOG_WARN, r->connection->log, 0,
-                                  "auth_require_jwt: decoded payload is a "
+                                  "auth_gate_jwt: decoded payload is a "
                                   "scalar (type=%d); field path requires "
                                   "an object or array as root value",
-                                  ngx_auth_require_json_type(json));
-                    ngx_auth_require_json_free(json);
+                                  ngx_auth_gate_json_type(json));
+                    ngx_auth_gate_json_free(json);
                     return reqs[j].error;
                 }
             }
@@ -435,12 +435,12 @@ require_validate_jwt(ngx_http_request_t *r,
         for (j = 0; j < groups[i].requirements->nelts; j++) {
             rc = require_validate_requirement(r, &reqs[j], json);
             if (rc != NGX_OK) {
-                ngx_auth_require_json_free(json);
+                ngx_auth_gate_json_free(json);
                 return rc;
             }
         }
 
-        ngx_auth_require_json_free(json);
+        ngx_auth_gate_json_free(json);
     }
 
     return NGX_OK;
@@ -448,7 +448,7 @@ require_validate_jwt(ngx_http_request_t *r,
 
 
 /*
- * Common validation logic for auth_require_json and auth_require_jwt.
+ * Common validation logic for auth_gate_json and auth_gate_jwt.
  * Extracts field from JSON root, parses expected value,
  * applies operator, and handles negation.
  *
@@ -458,17 +458,17 @@ require_validate_jwt(ngx_http_request_t *r,
  */
 static ngx_int_t
 require_validate_requirement(ngx_http_request_t *r,
-    ngx_auth_require_requirement_t *req, ngx_auth_require_json_t *root)
+    ngx_auth_gate_requirement_t *req, ngx_auth_gate_json_t *root)
 {
     ngx_int_t rc;
     ngx_str_t expected_str;
     ngx_str_t field_str;
-    ngx_auth_require_json_t *actual, *expected = NULL;
+    ngx_auth_gate_json_t *actual, *expected = NULL;
 
     static const ngx_str_t unknown = ngx_string("(unknown)");
 
     /* Reconstruct field path string for log messages */
-    field_str = ngx_auth_require_field_path_str(&req->field, r->pool);
+    field_str = ngx_auth_gate_field_path_str(&req->field, r->pool);
     if (field_str.data == NULL) {
         field_str = *(ngx_str_t *) &unknown;
     }
@@ -476,10 +476,10 @@ require_validate_requirement(ngx_http_request_t *r,
     /* actual: borrowed reference from root (not owned, do not free) */
 
     /* 1. Extract field (empty segments = root) */
-    actual = ngx_auth_require_field_get(root, &req->field);
+    actual = ngx_auth_gate_field_get(root, &req->field);
     if (actual == NULL) {
         ngx_log_error(NGX_LOG_WARN, r->connection->log, 0,
-                      "auth_require: field not found: %V", &field_str);
+                      "auth_gate: field not found: %V", &field_str);
         return req->error;
     }
 
@@ -489,16 +489,16 @@ require_validate_requirement(ngx_http_request_t *r,
     if (req->compiled_regex != NULL) {
         ngx_str_t actual_str;
 
-        if (ngx_auth_require_json_string(actual, &actual_str) != NGX_OK) {
+        if (ngx_auth_gate_json_string(actual, &actual_str) != NGX_OK) {
             rc = NGX_ERROR;
         } else if (memchr(actual_str.data, '\0', actual_str.len) != NULL) {
             ngx_log_error(NGX_LOG_WARN, r->connection->log, 0,
-                          "auth_require: match operator subject "
+                          "auth_gate: match operator subject "
                           "contains embedded NUL byte, field: %V",
                           &field_str);
             rc = NGX_ERROR;
         } else {
-            rc = ngx_auth_require_regex_exec_limited(
+            rc = ngx_auth_gate_regex_exec_limited(
                 req->compiled_regex, &actual_str,
                 r->connection->log);
         }
@@ -512,22 +512,22 @@ require_validate_requirement(ngx_http_request_t *r,
         return req->error;
     }
 
-    if (expected_str.len > NGX_HTTP_AUTH_REQUIRE_MAX_EXPECTED_SIZE) {
+    if (expected_str.len > NGX_HTTP_AUTH_GATE_MAX_EXPECTED_SIZE) {
         ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
-                      "auth_require: expected value too large: %uz,"
+                      "auth_gate: expected value too large: %uz,"
                       " field: %V", expected_str.len, &field_str);
         return req->error;
     }
 
     if (req->expected_json) {
-        expected = ngx_auth_require_json_parse(&expected_str);
+        expected = ngx_auth_gate_json_parse(&expected_str);
     } else {
-        expected = ngx_auth_require_json_from_string(&expected_str);
+        expected = ngx_auth_gate_json_from_string(&expected_str);
     }
 
     if (expected == NULL) {
         ngx_log_error(NGX_LOG_WARN, r->connection->log, 0,
-                      "auth_require: expected value parse failed,"
+                      "auth_gate: expected value parse failed,"
                       " field: %V", &field_str);
         return req->error;
     }
@@ -549,31 +549,31 @@ require_validate_requirement(ngx_http_request_t *r,
         if (stripped.len == 5
             && ngx_strncmp(stripped.data, "match", 5) == 0)
         {
-            ngx_http_auth_require_ctx_t *ctx;
+            ngx_http_auth_gate_ctx_t *ctx;
 
             ctx = ngx_http_get_module_ctx(r,
-                                          ngx_http_auth_require_module);
+                                          ngx_http_auth_gate_module);
             if (ctx == NULL) {
                 ctx = ngx_pcalloc(r->pool,
-                                  sizeof(ngx_http_auth_require_ctx_t));
+                                  sizeof(ngx_http_auth_gate_ctx_t));
                 if (ctx == NULL) {
-                    ngx_auth_require_json_free(expected);
+                    ngx_auth_gate_json_free(expected);
                     return req->error;
                 }
                 ngx_http_set_ctx(r, ctx,
-                                 ngx_http_auth_require_module);
+                                 ngx_http_auth_gate_module);
             }
 
             if (ctx->dynamic_regex_count
-                >= NGX_HTTP_AUTH_REQUIRE_MAX_DYNAMIC_REGEX)
+                >= NGX_HTTP_AUTH_GATE_MAX_DYNAMIC_REGEX)
             {
                 ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
-                              "auth_require: dynamic regex "
+                              "auth_gate: dynamic regex "
                               "compilation limit exceeded (%d),"
                               " field: %V",
-                              NGX_HTTP_AUTH_REQUIRE_MAX_DYNAMIC_REGEX,
+                              NGX_HTTP_AUTH_GATE_MAX_DYNAMIC_REGEX,
                               &field_str);
-                ngx_auth_require_json_free(expected);
+                ngx_auth_gate_json_free(expected);
                 return req->error;
             }
 
@@ -584,7 +584,7 @@ require_validate_requirement(ngx_http_request_t *r,
 
     rc = req->operator(actual, expected, r->pool);
 
-    ngx_auth_require_json_free(expected);
+    ngx_auth_gate_json_free(expected);
 
     /* 5. Apply negation (NGX_ERROR is NOT flipped) */
 
@@ -602,7 +602,7 @@ apply_negation:
     /* NGX_DECLINED, NGX_ERROR, or unexpected value → check failure */
     if (rc != NGX_OK) {
         ngx_log_error(NGX_LOG_WARN, r->connection->log, 0,
-                      "auth_require: %V check failed, field: %V",
+                      "auth_gate: %V check failed, field: %V",
                       &req->operator_name, &field_str);
         return req->error;
     }
@@ -633,7 +633,7 @@ require_parse_error(ngx_conf_t *cf, ngx_str_t *value, ngx_int_t *error)
     code = ngx_atoi(code_str.data, code_str.len);
     if (code < 400 || code > 599 || code == 444 || code == 499) {
         ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
-                           "auth_require: invalid error code \"%V\"", value);
+                           "auth_gate: invalid error code \"%V\"", value);
         return NGX_ERROR;
     }
 
@@ -654,7 +654,7 @@ require_parse_error(ngx_conf_t *cf, ngx_str_t *value, ngx_int_t *error)
  */
 static char *
 require_parse_requirement(ngx_conf_t *cf, ngx_str_t *args,
-    ngx_uint_t nargs, ngx_auth_require_requirement_t *req,
+    ngx_uint_t nargs, ngx_auth_gate_requirement_t *req,
     ngx_flag_t parse_field)
 {
     ngx_uint_t idx;
@@ -670,11 +670,11 @@ require_parse_requirement(ngx_conf_t *cf, ngx_str_t *args,
             return NGX_CONF_ERROR;
         }
 
-        if (ngx_auth_require_field_parse(cf->pool, &args[idx], &req->field)
+        if (ngx_auth_gate_field_parse(cf->pool, &args[idx], &req->field)
             != NGX_OK)
         {
             ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
-                               "auth_require: invalid field path \"%V\"",
+                               "auth_gate: invalid field path \"%V\"",
                                &args[idx]);
             return NGX_CONF_ERROR;
         }
@@ -684,7 +684,7 @@ require_parse_requirement(ngx_conf_t *cf, ngx_str_t *args,
     } else {
         /* No field: root path (empty segments) */
         req->field.segments = ngx_array_create(
-            cf->pool, 1, sizeof(ngx_auth_require_field_segment_t));
+            cf->pool, 1, sizeof(ngx_auth_gate_field_segment_t));
         if (req->field.segments == NULL) {
             return NGX_CONF_ERROR;
         }
@@ -697,11 +697,11 @@ require_parse_requirement(ngx_conf_t *cf, ngx_str_t *args,
 
     op_name = &args[idx];
 
-    if (ngx_auth_require_operator_find(op_name, &req->operator, &req->negate)
+    if (ngx_auth_gate_operator_find(op_name, &req->operator, &req->negate)
         != NGX_OK)
     {
         ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
-                           "auth_require: unknown operator \"%V\"", op_name);
+                           "auth_gate: unknown operator \"%V\"", op_name);
         return NGX_CONF_ERROR;
     }
 
@@ -711,7 +711,7 @@ require_parse_requirement(ngx_conf_t *cf, ngx_str_t *args,
     /* Parse expected value */
     if (idx >= nargs) {
         ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
-                           "auth_require: expected value missing");
+                           "auth_gate: expected value missing");
         return NGX_CONF_ERROR;
     }
 
@@ -720,22 +720,22 @@ require_parse_requirement(ngx_conf_t *cf, ngx_str_t *args,
     /* Check json= prefix */
     req->expected_json = 0;
 
-    if (expected_str->len >= NGX_HTTP_AUTH_REQUIRE_JSON_PREFIX_LEN
+    if (expected_str->len >= NGX_HTTP_AUTH_GATE_JSON_PREFIX_LEN
         && ngx_strncmp(expected_str->data, "json=",
-                       NGX_HTTP_AUTH_REQUIRE_JSON_PREFIX_LEN) == 0)
+                       NGX_HTTP_AUTH_GATE_JSON_PREFIX_LEN) == 0)
     {
-        if (expected_str->len == NGX_HTTP_AUTH_REQUIRE_JSON_PREFIX_LEN) {
+        if (expected_str->len == NGX_HTTP_AUTH_GATE_JSON_PREFIX_LEN) {
             ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
-                               "auth_require: empty JSON value "
+                               "auth_gate: empty JSON value "
                                "after \"json=\" prefix");
             return NGX_CONF_ERROR;
         }
 
         req->expected_json = 1;
         json_value.data = expected_str->data
-                          + NGX_HTTP_AUTH_REQUIRE_JSON_PREFIX_LEN;
+                          + NGX_HTTP_AUTH_GATE_JSON_PREFIX_LEN;
         json_value.len = expected_str->len
-                         - NGX_HTTP_AUTH_REQUIRE_JSON_PREFIX_LEN;
+                         - NGX_HTTP_AUTH_GATE_JSON_PREFIX_LEN;
         expected_str = &json_value;
     }
 
@@ -758,17 +758,17 @@ require_parse_requirement(ngx_conf_t *cf, ngx_str_t *args,
 
     /* Validate constant json= value at configure time */
     if (req->expected_json && req->expected->lengths == NULL) {
-        ngx_auth_require_json_t *test;
+        ngx_auth_gate_json_t *test;
 
-        test = ngx_auth_require_json_parse(expected_str);
+        test = ngx_auth_gate_json_parse(expected_str);
         if (test == NULL) {
             ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
-                               "auth_require: invalid JSON in "
+                               "auth_gate: invalid JSON in "
                                "\"json=%V\"", expected_str);
             return NGX_CONF_ERROR;
         }
 
-        ngx_auth_require_json_free(test);
+        ngx_auth_gate_json_free(test);
     }
 
 #if (NGX_PCRE)
@@ -796,32 +796,32 @@ require_parse_requirement(ngx_conf_t *cf, ngx_str_t *args,
 
             /* json= prefix: parse JSON to extract the string pattern */
             if (req->expected_json) {
-                ngx_auth_require_json_t *json;
+                ngx_auth_gate_json_t *json;
                 ngx_str_t json_str;
 
-                json = ngx_auth_require_json_parse(expected_str);
+                json = ngx_auth_gate_json_parse(expected_str);
                 if (json == NULL) {
                     ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
-                                       "auth_require: invalid JSON in "
+                                       "auth_gate: invalid JSON in "
                                        "match pattern \"json=%V\"",
                                        expected_str);
                     return NGX_CONF_ERROR;
                 }
 
-                if (ngx_auth_require_json_string(json, &json_str)
+                if (ngx_auth_gate_json_string(json, &json_str)
                     != NGX_OK)
                 {
                     ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
-                                       "auth_require: json= value for "
+                                       "auth_gate: json= value for "
                                        "match must be a string");
-                    ngx_auth_require_json_free(json);
+                    ngx_auth_gate_json_free(json);
                     return NGX_CONF_ERROR;
                 }
 
                 pattern.data = ngx_pstrdup(cf->pool, &json_str);
                 pattern.len = json_str.len;
 
-                ngx_auth_require_json_free(json);
+                ngx_auth_gate_json_free(json);
 
                 if (pattern.data == NULL) {
                     return NGX_CONF_ERROR;
@@ -837,7 +837,7 @@ require_parse_requirement(ngx_conf_t *cf, ngx_str_t *args,
 
             if (ngx_regex_compile(&rc) != NGX_OK) {
                 ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
-                                   "auth_require: invalid regex \"%V\": %V",
+                                   "auth_gate: invalid regex \"%V\": %V",
                                    expected_str, &rc.err);
                 return NGX_CONF_ERROR;
             }
@@ -859,7 +859,7 @@ require_parse_requirement(ngx_conf_t *cf, ngx_str_t *args,
             && ngx_strncmp(stripped.data, "match", 5) == 0)
         {
             ngx_conf_log_error(NGX_LOG_WARN, cf, 0,
-                               "auth_require: match operator with dynamic "
+                               "auth_gate: match operator with dynamic "
                                "pattern compiles regex per request; "
                                "this is a ReDoS risk if pattern is derived "
                                "from untrusted input; "
@@ -869,7 +869,7 @@ require_parse_requirement(ngx_conf_t *cf, ngx_str_t *args,
 #endif
 
     /* Parse optional error=NNN */
-    req->error = NGX_HTTP_AUTH_REQUIRE_DEFAULT_ERROR;
+    req->error = NGX_HTTP_AUTH_GATE_DEFAULT_ERROR;
 
     if (idx < nargs) {
         ngx_int_t rc;
@@ -881,7 +881,7 @@ require_parse_requirement(ngx_conf_t *cf, ngx_str_t *args,
 
         if (rc == NGX_DECLINED) {
             ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
-                               "auth_require: unexpected argument \"%V\"",
+                               "auth_gate: unexpected argument \"%V\"",
                                &args[idx]);
             return NGX_CONF_ERROR;
         }
@@ -890,7 +890,7 @@ require_parse_requirement(ngx_conf_t *cf, ngx_str_t *args,
 
         if (idx < nargs) {
             ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
-                               "auth_require: unexpected argument \"%V\"",
+                               "auth_gate: unexpected argument \"%V\"",
                                &args[idx]);
             return NGX_CONF_ERROR;
         }
@@ -901,7 +901,7 @@ require_parse_requirement(ngx_conf_t *cf, ngx_str_t *args,
 
 
 /*
- * auth_require directive handler
+ * auth_gate directive handler
  *
  * Detects mode based on 2nd argument:
  * - Starts with '$': additional variable (boolean check mode)
@@ -909,15 +909,15 @@ require_parse_requirement(ngx_conf_t *cf, ngx_str_t *args,
  * - Otherwise: operator (comparison mode)
  */
 static char *
-ngx_http_auth_require_conf_set_require(ngx_conf_t *cf,
+ngx_http_auth_gate_conf_set_require(ngx_conf_t *cf,
     ngx_command_t *cmd, void *conf)
 {
-    ngx_http_auth_require_loc_conf_t *lcf = conf;
+    ngx_http_auth_gate_loc_conf_t *lcf = conf;
 
     ngx_str_t *values;
     ngx_uint_t i;
-    ngx_http_auth_require_var_t *var;
-    ngx_auth_require_requirement_t *req;
+    ngx_http_auth_gate_var_t *var;
+    ngx_auth_gate_requirement_t *req;
     ngx_http_complex_value_t *cv;
     ngx_http_compile_complex_value_t ccv;
     ngx_flag_t is_compare;
@@ -928,7 +928,7 @@ ngx_http_auth_require_conf_set_require(ngx_conf_t *cf,
     /* values[1].len > 0 guaranteed by nginx config parser */
     if (values[1].data[0] != '$') {
         ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
-                           "auth_require: first argument must be a variable");
+                           "auth_gate: first argument must be a variable");
         return NGX_CONF_ERROR;
     }
 
@@ -955,7 +955,7 @@ ngx_http_auth_require_conf_set_require(ngx_conf_t *cf,
         /* Comparison mode: $variable operator expected [error=NNN] */
         if (lcf->require_compare == NULL) {
             lcf->require_compare = ngx_array_create(
-                cf->pool, 2, sizeof(ngx_auth_require_requirement_t));
+                cf->pool, 2, sizeof(ngx_auth_gate_requirement_t));
             if (lcf->require_compare == NULL) {
                 return NGX_CONF_ERROR;
             }
@@ -966,7 +966,7 @@ ngx_http_auth_require_conf_set_require(ngx_conf_t *cf,
             return NGX_CONF_ERROR;
         }
 
-        ngx_memzero(req, sizeof(ngx_auth_require_requirement_t));
+        ngx_memzero(req, sizeof(ngx_auth_gate_requirement_t));
 
         req->variable = ngx_palloc(cf->pool,
                                    sizeof(ngx_http_complex_value_t));
@@ -992,7 +992,7 @@ ngx_http_auth_require_conf_set_require(ngx_conf_t *cf,
     /* Boolean check mode: $variable [...] [error=NNN] */
     if (lcf->require_vars == NULL) {
         lcf->require_vars = ngx_array_create(
-            cf->pool, 2, sizeof(ngx_http_auth_require_var_t));
+            cf->pool, 2, sizeof(ngx_http_auth_gate_var_t));
         if (lcf->require_vars == NULL) {
             return NGX_CONF_ERROR;
         }
@@ -1009,7 +1009,7 @@ ngx_http_auth_require_conf_set_require(ngx_conf_t *cf,
         return NGX_CONF_ERROR;
     }
 
-    var->error = NGX_HTTP_AUTH_REQUIRE_DEFAULT_ERROR;
+    var->error = NGX_HTTP_AUTH_GATE_DEFAULT_ERROR;
     error_set = 0;
 
     for (i = 1; i < cf->args->nelts; i++) {
@@ -1019,7 +1019,7 @@ ngx_http_auth_require_conf_set_require(ngx_conf_t *cf,
         if (rc == NGX_OK) {
             if (error_set) {
                 ngx_conf_log_error(NGX_LOG_WARN, cf, 0,
-                                   "auth_require: duplicate error= "
+                                   "auth_gate: duplicate error= "
                                    "specified, overriding with \"%V\"",
                                    &values[i]);
             }
@@ -1032,7 +1032,7 @@ ngx_http_auth_require_conf_set_require(ngx_conf_t *cf,
 
         if (values[i].data[0] != '$') {
             ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
-                               "auth_require: "
+                               "auth_gate: "
                                "arguments must be variables");
             return NGX_CONF_ERROR;
         }
@@ -1054,7 +1054,7 @@ ngx_http_auth_require_conf_set_require(ngx_conf_t *cf,
 
     if (var->values->nelts == 0) {
         ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
-                           "auth_require: no variables specified");
+                           "auth_gate: no variables specified");
         return NGX_CONF_ERROR;
     }
 
@@ -1063,22 +1063,22 @@ ngx_http_auth_require_conf_set_require(ngx_conf_t *cf,
 
 
 /*
- * auth_require_json directive handler
+ * auth_gate_json directive handler
  *
- * Syntax: auth_require_json $variable <field> <operator> <expected>
+ * Syntax: auth_gate_json $variable <field> <operator> <expected>
  *                           [error=4xx|5xx];
  *
  * Groups requirements by variable name for single-parse optimization.
  */
 static char *
-ngx_http_auth_require_conf_set_json(ngx_conf_t *cf,
+ngx_http_auth_gate_conf_set_json(ngx_conf_t *cf,
     ngx_command_t *cmd, void *conf)
 {
-    ngx_http_auth_require_loc_conf_t *lcf = conf;
+    ngx_http_auth_gate_loc_conf_t *lcf = conf;
 
     ngx_str_t *values;
-    ngx_auth_require_requirement_t *req;
-    ngx_auth_require_var_group_t *group;
+    ngx_auth_gate_requirement_t *req;
+    ngx_auth_gate_var_group_t *group;
     ngx_http_compile_complex_value_t ccv;
 
     values = cf->args->elts;
@@ -1086,7 +1086,7 @@ ngx_http_auth_require_conf_set_json(ngx_conf_t *cf,
     /* values[1].len > 0 guaranteed by nginx config parser */
     if (values[1].data[0] != '$') {
         ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
-                           "auth_require_json: "
+                           "auth_gate_json: "
                            "first argument must be a variable");
         return NGX_CONF_ERROR;
     }
@@ -1094,7 +1094,7 @@ ngx_http_auth_require_conf_set_json(ngx_conf_t *cf,
     /* Second argument must be a field path (starts with '.') */
     if (values[2].data[0] != '.') {
         ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
-                           "auth_require_json: "
+                           "auth_gate_json: "
                            "field path must start with '.': \"%V\"",
                            &values[2]);
         return NGX_CONF_ERROR;
@@ -1102,7 +1102,7 @@ ngx_http_auth_require_conf_set_json(ngx_conf_t *cf,
 
     if (lcf->require_json == NULL) {
         lcf->require_json = ngx_array_create(
-            cf->pool, 2, sizeof(ngx_auth_require_var_group_t));
+            cf->pool, 2, sizeof(ngx_auth_gate_var_group_t));
         if (lcf->require_json == NULL) {
             return NGX_CONF_ERROR;
         }
@@ -1117,7 +1117,7 @@ ngx_http_auth_require_conf_set_json(ngx_conf_t *cf,
             return NGX_CONF_ERROR;
         }
 
-        ngx_memzero(group, sizeof(ngx_auth_require_var_group_t));
+        ngx_memzero(group, sizeof(ngx_auth_gate_var_group_t));
         group->variable_name = values[1];
 
         group->variable = ngx_palloc(cf->pool,
@@ -1136,7 +1136,7 @@ ngx_http_auth_require_conf_set_json(ngx_conf_t *cf,
         }
 
         group->requirements = ngx_array_create(
-            cf->pool, 2, sizeof(ngx_auth_require_requirement_t));
+            cf->pool, 2, sizeof(ngx_auth_gate_requirement_t));
         if (group->requirements == NULL) {
             return NGX_CONF_ERROR;
         }
@@ -1147,7 +1147,7 @@ ngx_http_auth_require_conf_set_json(ngx_conf_t *cf,
         return NGX_CONF_ERROR;
     }
 
-    ngx_memzero(req, sizeof(ngx_auth_require_requirement_t));
+    ngx_memzero(req, sizeof(ngx_auth_gate_requirement_t));
 
     /* Parse: field operator expected [error=NNN] */
     return require_parse_requirement(cf, &values[2], cf->args->nelts - 2,
@@ -1156,22 +1156,22 @@ ngx_http_auth_require_conf_set_json(ngx_conf_t *cf,
 
 
 /*
- * auth_require_jwt directive handler
+ * auth_gate_jwt directive handler
  *
- * Syntax: auth_require_jwt $variable <claim> <operator> <expected>
+ * Syntax: auth_gate_jwt $variable <claim> <operator> <expected>
  *                          [error=4xx|5xx];
  *
  * Groups requirements by variable name for single-decode optimization.
  */
 static char *
-ngx_http_auth_require_conf_set_jwt(ngx_conf_t *cf,
+ngx_http_auth_gate_conf_set_jwt(ngx_conf_t *cf,
     ngx_command_t *cmd, void *conf)
 {
-    ngx_http_auth_require_loc_conf_t *lcf = conf;
+    ngx_http_auth_gate_loc_conf_t *lcf = conf;
 
     ngx_str_t *values;
-    ngx_auth_require_requirement_t *req;
-    ngx_auth_require_var_group_t *group;
+    ngx_auth_gate_requirement_t *req;
+    ngx_auth_gate_var_group_t *group;
     ngx_http_compile_complex_value_t ccv;
 
     values = cf->args->elts;
@@ -1179,7 +1179,7 @@ ngx_http_auth_require_conf_set_jwt(ngx_conf_t *cf,
     /* values[1].len > 0 guaranteed by nginx config parser */
     if (values[1].data[0] != '$') {
         ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
-                           "auth_require_jwt: "
+                           "auth_gate_jwt: "
                            "first argument must be a variable");
         return NGX_CONF_ERROR;
     }
@@ -1187,7 +1187,7 @@ ngx_http_auth_require_conf_set_jwt(ngx_conf_t *cf,
     /* Second argument must be a field path (starts with '.') */
     if (values[2].data[0] != '.') {
         ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
-                           "auth_require_jwt: "
+                           "auth_gate_jwt: "
                            "field path must start with '.': \"%V\"",
                            &values[2]);
         return NGX_CONF_ERROR;
@@ -1195,7 +1195,7 @@ ngx_http_auth_require_conf_set_jwt(ngx_conf_t *cf,
 
     if (lcf->require_jwt == NULL) {
         lcf->require_jwt = ngx_array_create(
-            cf->pool, 2, sizeof(ngx_auth_require_var_group_t));
+            cf->pool, 2, sizeof(ngx_auth_gate_var_group_t));
         if (lcf->require_jwt == NULL) {
             return NGX_CONF_ERROR;
         }
@@ -1210,11 +1210,11 @@ ngx_http_auth_require_conf_set_jwt(ngx_conf_t *cf,
             return NGX_CONF_ERROR;
         }
 
-        ngx_memzero(group, sizeof(ngx_auth_require_var_group_t));
+        ngx_memzero(group, sizeof(ngx_auth_gate_var_group_t));
         group->variable_name = values[1];
 
         ngx_conf_log_error(NGX_LOG_WARN, cf, 0,
-                           "auth_require_jwt: no signature verification "
+                           "auth_gate_jwt: no signature verification "
                            "is performed; use with auth_jwt or auth_oidc "
                            "for secure JWT validation");
 
@@ -1234,7 +1234,7 @@ ngx_http_auth_require_conf_set_jwt(ngx_conf_t *cf,
         }
 
         group->requirements = ngx_array_create(
-            cf->pool, 2, sizeof(ngx_auth_require_requirement_t));
+            cf->pool, 2, sizeof(ngx_auth_gate_requirement_t));
         if (group->requirements == NULL) {
             return NGX_CONF_ERROR;
         }
@@ -1245,7 +1245,7 @@ ngx_http_auth_require_conf_set_jwt(ngx_conf_t *cf,
         return NGX_CONF_ERROR;
     }
 
-    ngx_memzero(req, sizeof(ngx_auth_require_requirement_t));
+    ngx_memzero(req, sizeof(ngx_auth_gate_requirement_t));
 
     /* Parse: claim operator expected [error=NNN] */
     return require_parse_requirement(cf, &values[2], cf->args->nelts - 2,
@@ -1320,11 +1320,11 @@ require_merge_array(ngx_conf_t *cf, ngx_array_t **prev, ngx_array_t **conf,
  * Find a variable group by variable name.
  * Returns NULL if not found.
  */
-static ngx_auth_require_var_group_t *
+static ngx_auth_gate_var_group_t *
 require_find_group(ngx_array_t *groups, ngx_str_t *variable_name)
 {
     ngx_uint_t i;
-    ngx_auth_require_var_group_t *g;
+    ngx_auth_gate_var_group_t *g;
 
     g = groups->elts;
 
@@ -1351,8 +1351,8 @@ require_merge_groups(ngx_conf_t *cf, ngx_array_t **prev, ngx_array_t **conf)
 {
     ngx_uint_t i, j;
     ngx_array_t *merged;
-    ngx_auth_require_var_group_t *pg, *cg, *mg;
-    ngx_auth_require_requirement_t *reqs;
+    ngx_auth_gate_var_group_t *pg, *cg, *mg;
+    ngx_auth_gate_requirement_t *reqs;
 
     if (*conf == NULL) {
         *conf = *prev;
@@ -1369,7 +1369,7 @@ require_merge_groups(ngx_conf_t *cf, ngx_array_t **prev, ngx_array_t **conf)
 
     merged = ngx_array_create(cf->pool,
                               (*prev)->nelts + (*conf)->nelts,
-                              sizeof(ngx_auth_require_var_group_t));
+                              sizeof(ngx_auth_gate_var_group_t));
     if (merged == NULL) {
         return NGX_ERROR;
     }
@@ -1386,7 +1386,7 @@ require_merge_groups(ngx_conf_t *cf, ngx_array_t **prev, ngx_array_t **conf)
 
         mg->requirements = ngx_array_create(
             cf->pool, pg[i].requirements->nelts,
-            sizeof(ngx_auth_require_requirement_t));
+            sizeof(ngx_auth_gate_requirement_t));
         if (mg->requirements == NULL) {
             return NGX_ERROR;
         }
@@ -1394,7 +1394,7 @@ require_merge_groups(ngx_conf_t *cf, ngx_array_t **prev, ngx_array_t **conf)
         reqs = pg[i].requirements->elts;
 
         for (j = 0; j < pg[i].requirements->nelts; j++) {
-            ngx_auth_require_requirement_t *dst;
+            ngx_auth_gate_requirement_t *dst;
 
             dst = ngx_array_push(mg->requirements);
             if (dst == NULL) {
@@ -1414,7 +1414,7 @@ require_merge_groups(ngx_conf_t *cf, ngx_array_t **prev, ngx_array_t **conf)
             reqs = cg[i].requirements->elts;
 
             for (j = 0; j < cg[i].requirements->nelts; j++) {
-                ngx_auth_require_requirement_t *dst;
+                ngx_auth_gate_requirement_t *dst;
 
                 dst = ngx_array_push(mg->requirements);
                 if (dst == NULL) {
@@ -1449,11 +1449,11 @@ require_merge_groups(ngx_conf_t *cf, ngx_array_t **prev, ngx_array_t **conf)
 
 
 static void *
-ngx_http_auth_require_create_loc_conf(ngx_conf_t *cf)
+ngx_http_auth_gate_create_loc_conf(ngx_conf_t *cf)
 {
-    ngx_http_auth_require_loc_conf_t *lcf;
+    ngx_http_auth_gate_loc_conf_t *lcf;
 
-    lcf = ngx_pcalloc(cf->pool, sizeof(ngx_http_auth_require_loc_conf_t));
+    lcf = ngx_pcalloc(cf->pool, sizeof(ngx_http_auth_gate_loc_conf_t));
     if (lcf == NULL) {
         return NULL;
     }
@@ -1465,19 +1465,19 @@ ngx_http_auth_require_create_loc_conf(ngx_conf_t *cf)
 
 
 static char *
-ngx_http_auth_require_merge_loc_conf(ngx_conf_t *cf, void *parent, void *child)
+ngx_http_auth_gate_merge_loc_conf(ngx_conf_t *cf, void *parent, void *child)
 {
-    ngx_http_auth_require_loc_conf_t *prev = parent;
-    ngx_http_auth_require_loc_conf_t *conf = child;
+    ngx_http_auth_gate_loc_conf_t *prev = parent;
+    ngx_http_auth_gate_loc_conf_t *conf = child;
 
     if (require_merge_array(cf, &prev->require_vars, &conf->require_vars,
-                            sizeof(ngx_http_auth_require_var_t)) != NGX_OK)
+                            sizeof(ngx_http_auth_gate_var_t)) != NGX_OK)
     {
         return NGX_CONF_ERROR;
     }
 
     if (require_merge_array(cf, &prev->require_compare, &conf->require_compare,
-                            sizeof(ngx_auth_require_requirement_t)) != NGX_OK)
+                            sizeof(ngx_auth_gate_requirement_t)) != NGX_OK)
     {
         return NGX_CONF_ERROR;
     }
@@ -1499,7 +1499,7 @@ ngx_http_auth_require_merge_loc_conf(ngx_conf_t *cf, void *parent, void *child)
 
 
 /*
- * Variable handler: $auth_require_epoch
+ * Variable handler: $auth_gate_epoch
  *
  * ngx_time() returns a cached time value that nginx updates once per
  * event loop iteration.  The precision is therefore limited to the
@@ -1530,7 +1530,7 @@ require_variable_epoch(ngx_http_request_t *r,
 
 /* Module initialization: register ACCESS phase handler and variables */
 static ngx_int_t
-ngx_http_auth_require_init(ngx_conf_t *cf)
+ngx_http_auth_gate_init(ngx_conf_t *cf)
 {
     ngx_http_handler_pt *h;
     ngx_http_core_main_conf_t *cmcf;
@@ -1543,7 +1543,7 @@ ngx_http_auth_require_init(ngx_conf_t *cf)
         return NGX_ERROR;
     }
 
-    *h = ngx_http_auth_require_access_handler;
+    *h = ngx_http_auth_gate_access_handler;
 
     /* Register variables */
     for (v = require_vars; v->name.len; v++) {

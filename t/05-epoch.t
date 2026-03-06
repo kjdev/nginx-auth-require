@@ -13,7 +13,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 include $TEST_NGINX_CONF_DIR/variables.conf;
 location / {
-  auth_require_jwt $jwt_exp_future .exp gt json=$auth_require_epoch;
+  auth_gate_jwt $jwt_exp_future .exp gt json=$auth_gate_epoch;
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -26,7 +26,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 include $TEST_NGINX_CONF_DIR/variables.conf;
 location / {
-  auth_require_jwt $jwt_exp_past .exp gt json=$auth_require_epoch;
+  auth_gate_jwt $jwt_exp_past .exp gt json=$auth_gate_epoch;
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -39,7 +39,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 include $TEST_NGINX_CONF_DIR/variables.conf;
 location / {
-  auth_require_jwt $jwt_nbf_past .nbf le json=$auth_require_epoch;
+  auth_gate_jwt $jwt_nbf_past .nbf le json=$auth_gate_epoch;
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -52,7 +52,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 include $TEST_NGINX_CONF_DIR/variables.conf;
 location / {
-  auth_require_jwt $jwt_nbf_future .nbf le json=$auth_require_epoch;
+  auth_gate_jwt $jwt_nbf_future .nbf le json=$auth_gate_epoch;
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
@@ -65,7 +65,7 @@ include $TEST_NGINX_CONF_DIR/authorized_server.conf;
 --- config
 include $TEST_NGINX_CONF_DIR/variables.conf;
 location / {
-  add_header X-Epoch $auth_require_epoch;
+  add_header X-Epoch $auth_gate_epoch;
   include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
 }
 --- request
