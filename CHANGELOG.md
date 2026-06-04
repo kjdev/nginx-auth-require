@@ -1,5 +1,14 @@
 # Changelog
 
+## [5614d18](../../commit/5614d18) - 2026-06-04
+
+### Changed
+
+- Bumped the [nxe-json](https://github.com/kjdev/nxe-json) submodule from 0.3.0 to 0.5.0 and the [nxe-jwx](https://github.com/kjdev/nxe-jwx) submodule from 0.1.0 to 0.2.0
+  - nxe-json: adds scalar constructors (`nxe_json_deep_copy` / `nxe_json_from_integer` / `nxe_json_from_boolean` / `nxe_json_null`) and `nxe_json_stringify_compact_sorted` (a canonical serializer that emits object keys in ascending byte order); promotes the NUL-termination of `nxe_json_stringify_*` and `nxe_json_string` output to a public contract
+  - nxe-jwx: adds `nxe_jwx_jwks_free()` for immediate keyset release (lets callers free key material without relying on a pool cleanup handler, avoiding leaks on a master-process pool that survives config reloads); promotes `nxe_jwx_token_alg()` / `nxe_jwx_token_kid()` returning NUL-terminated `data` to a public contract (inherited from nxe-json 0.5.0's string contract; no implementation change)
+  - All of these are API additions and contract clarifications in the underlying libraries; auth_gate's current code paths do not call the new APIs, so there is no behavioral change
+
 ## [447acc5](../../commit/447acc5) - 2026-05-13
 
 ### Changed
