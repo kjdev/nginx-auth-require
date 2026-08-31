@@ -1837,7 +1837,11 @@ jwt_verify_start(ngx_http_request_t *r,
     ngx_http_auth_gate_jwt_verify_t *verifies;
     ngx_uint_t i, j, unique_count;
     ngx_str_t *unique_uris;
-    ngx_http_request_t *sr;
+    ngx_http_request_t *sr; /* reused across loop iterations; the returned
+                              * subrequest handle itself is never consulted
+                              * after ngx_http_subrequest() returns, only
+                              * the post_subrequest callback result matters
+                              */
     ngx_http_post_subrequest_t *ps;
 
     verifies = lcf->require_jwt_verify->elts;
@@ -1943,8 +1947,14 @@ jwt_verify_start(ngx_http_request_t *r,
         ps->handler = jwks_post_subrequest_handler;
         ps->data = &ctx->jwks_results[i];
 
+        /* WAITED tells the core this subrequest isn't the only thing the
+         * parent is waiting on, so ngx_http_finalize_request() correctly
+         * defers the parent's completion until every JWKS subrequest in
+         * this loop has finished, not just the first one issued.
+         */
         if (ngx_http_subrequest(r, &unique_uris[i], NULL, &sr, ps,
-                                NGX_HTTP_SUBREQUEST_IN_MEMORY) != NGX_OK)
+                                NGX_HTTP_SUBREQUEST_IN_MEMORY
+                                | NGX_HTTP_SUBREQUEST_WAITED) != NGX_OK)
         {
             ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
                           "auth_gate_jwt_verify: failed to create "
