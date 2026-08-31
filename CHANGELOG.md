@@ -3,6 +3,16 @@
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Changed
+
+- Added the [nxe-phase](https://github.com/kjdev/nxe-phase) submodule and switched PRECONTENT phase handler registration to the shared, priority-based registry (`nxe_phase_add_handler`, priority 600). When co-located with sibling modules such as auth-cedar (700), auth-rbac (750), or internal-redirect (900) in the same location block, execution order is now deterministic regardless of `load_module` ordering
+
+### Fixed
+
+- Set `NGX_HTTP_SUBREQUEST_WAITED` on the parallel JWKS-fetch subrequests issued by `auth_gate_jwt_verify`. Without it, the parent request's completion tracking could fail to correctly wait for all JWKS subrequests to finish
+
 ## [0.4.2] - 2026-06-04
 
 ### Changed
