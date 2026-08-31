@@ -10,6 +10,7 @@
 #include "ngx_http_auth_gate_module.h"
 #include "nxe_json.h"
 #include "nxe_jwx.h"
+#include "nxe_phase.h"
 
 #define NGX_HTTP_AUTH_GATE_DEFAULT_ERROR  NGX_HTTP_FORBIDDEN
 #define NGX_HTTP_AUTH_GATE_JSON_PREFIX_LEN  5
@@ -2202,18 +2203,15 @@ jwt_verify_execute(ngx_http_request_t *r,
 static ngx_int_t
 ngx_http_auth_gate_init(ngx_conf_t *cf)
 {
-    ngx_http_handler_pt *h;
-    ngx_http_core_main_conf_t *cmcf;
     ngx_http_variable_t *var, *v;
 
-    cmcf = ngx_http_conf_get_module_main_conf(cf, ngx_http_core_module);
-
-    h = ngx_array_push(&cmcf->phases[NGX_HTTP_PRECONTENT_PHASE].handlers);
-    if (h == NULL) {
+    if (nxe_phase_add_handler(cf, NGX_HTTP_PRECONTENT_PHASE,
+                               NXE_PHASE_PRIO_GATE,
+                               ngx_http_auth_gate_handler,
+                               "auth_gate") != NGX_OK)
+    {
         return NGX_ERROR;
     }
-
-    *h = ngx_http_auth_gate_handler;
 
     /* Register variables */
     for (v = require_vars; v->name.len; v++) {
