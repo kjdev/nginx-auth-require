@@ -343,6 +343,31 @@ location / {
 GET /
 --- error_code: 403
 
+=== multiple verify: distinct URIs, one JWKS fetch fails (500)
+--- http_config
+include $TEST_NGINX_CONF_DIR/authorized_server.conf;
+--- config
+include $TEST_NGINX_CONF_DIR/variables.conf;
+include $TEST_NGINX_CONF_DIR/jwt_verify_vars.conf;
+location = /jwks_ok {
+    internal;
+    include $TEST_NGINX_CONF_DIR/jwks_return.conf;
+}
+location = /jwks_fail {
+    internal;
+    return 500 '{"error":"internal"}';
+}
+location / {
+    auth_gate_jwt_verify $jwt_rs256 jwks=/jwks_ok;
+    auth_gate_jwt_verify $jwt_es256 jwks=/jwks_fail;
+    include $TEST_NGINX_CONF_DIR/authorized_proxy.conf;
+}
+--- request
+GET /
+--- error_code: 401
+--- error_log
+auth_gate_jwt_verify: JWKS fetch returned status
+
 === ES256K: signature verification success
 --- http_config
 include $TEST_NGINX_CONF_DIR/authorized_server.conf;
