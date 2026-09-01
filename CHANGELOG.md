@@ -5,6 +5,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-09-02
+
 ### Changed
 
 - Added the [nxe-phase](https://github.com/kjdev/nxe-phase) submodule and switched PRECONTENT phase handler registration to the shared, priority-based registry (`nxe_phase_add_handler`, priority 600). When co-located with sibling modules such as auth-cedar (700), auth-rbac (750), or internal-redirect (900) in the same location block, execution order is now deterministic regardless of `load_module` ordering
