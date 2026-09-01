@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 - Added the [nxe-phase](https://github.com/kjdev/nxe-phase) submodule and switched PRECONTENT phase handler registration to the shared, priority-based registry (`nxe_phase_add_handler`, priority 600). When co-located with sibling modules such as auth-cedar (700), auth-rbac (750), or internal-redirect (900) in the same location block, execution order is now deterministic regardless of `load_module` ordering
 
+### Dependencies
+
+- Bumped the [nxe-jwx](https://github.com/kjdev/nxe-jwx) submodule from 0.2.0 to 0.3.0
+  - Adds RFC 7638 JWK thumbprints, `nxe_jwx_jwks_verify_raw()` (detached signature verification), and `nxe_jwx_encode()` (signed JWT issuing); fixes decode size limit enforcement on `nxe_jwx_encode()` output
+  - auth_gate's current code paths do not call the new APIs, so there is no behavioral change
+
 ### Fixed
 
 - Set `NGX_HTTP_SUBREQUEST_WAITED` on the parallel JWKS-fetch subrequests issued by `auth_gate_jwt_verify`. Without it, the parent request's completion tracking could fail to correctly wait for all JWKS subrequests to finish
